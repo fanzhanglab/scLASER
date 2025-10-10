@@ -97,7 +97,7 @@ head(pcs)
 ```{r}
 
 obj = scLASER(metadata = dummy_data, pcs = pcs)
-
+obj
 ```
 
 
@@ -110,26 +110,55 @@ obj <- compute_umap(obj, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
 
 ```{r}
     
-    # dd <- cbind(dummy_data, umap_res)
-    # dd$disease_time <- paste0(dd[[p$disease_col]], "_", dd[[p$visit_col]])
-    # 
-    # case_n <- round(p$n_individuals * p$prop_disease)
-    # ctrl_n <- p$n_individuals - case_n
-    # 
-    # prog_tag  <- paste(p$visit_effects_progressor, collapse = "-")
-    # title_tag <- sprintf("prog%s_cells%d_N%d_ctrl%d_case%d",
-    #                      prog_tag, p$n_cells, p$n_individuals, ctrl_n, case_n)
-    # 
-    
- 
+
  plot_celltype_proportions(obj) 
     
 ```
 
 
 
+
+
+```{r}
+obj <- run_harmony(obj, batch_col = "sample_id", theta = 2,
+                                      # lambda = 1,
+                                      # tau = 10, 
+                                      epsilon.cluster = -Inf,
+                                      epsilon.harmony = -Inf,
+                                      max.iter.cluster = 30,
+                                      max.iter.harmony = 10,
+                                      plot_convergence = F)
+
+
+```
+
+
 ```{r}
 
-obj = GLM_interact(obj)
+obj = association_nam_scLASER(object = obj,
+  test_var          = "test_var_cna",
+  samplem_key       = "subject_id",
+  graph_use         = "RNA_nn",
+  batches           = "batch",
+  covs              = c("age", "sex"),
+  nsteps            = NULL,
+  verbose           = TRUE,
+  assay             = NULL,
+  key               = "NAMPC_",
+  maxnsteps         = 15L,
+  max_frac_pcs      = 0.15,
+  ks                = NULL,
+  Nnull             = 1000,
+  force_permute_all = FALSE,
+  local_test        = TRUE,
+  seed              = 1234,
+  return_nam        = F
+)
+```
+
+
+
+```{r}
+obj = longAnalyses_plusModelSelection(obj)
 ```
 

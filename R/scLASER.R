@@ -4,23 +4,34 @@ setClassUnion("dfOrNULL",     c("data.frame", "NULL"))
 setClass(
   "scLASER",
   slots = list(
-    metadata = "data.frame",   # sample/cell metadata
-    pcs      = "matrixOrNULL", # principal components
-    masc    = "dfOrNULL", # adjacency or kNN graph (optional)
-    umap     = "dfOrNULL"      # UMAP coordinates (optional)
+    metadata = "data.frame",
+    pcs      = "matrixOrNULL",
+    masc     = "dfOrNULL",
+    umap     = "dfOrNULL",
+    harmony  = "matrixOrNULL",
+    nam_pcs  = "matrixOrNULL"
   ),
   prototype = list(
     metadata = data.frame(),
     pcs      = NULL,
-    masc    = NULL,
-    umap     = NULL
+    masc     = NULL,
+    umap     = NULL,
+    harmony  = NULL,
+    nam_pcs  = NULL
   )
 )
 
-#wrapper
 scLASER <- function(metadata = data.frame(),
                     pcs = NULL,
                     masc = NULL,
-                    umap = NULL) {
-  new("scLASER", metadata = metadata, pcs = pcs, masc = masc, umap = umap)
+                    umap = NULL,
+                    harmony = NULL,
+                    nam_pcs = NULL) {
+  new("scLASER",
+      metadata = metadata,
+      pcs      = pcs,
+      masc     = masc,
+      umap     = umap,
+      harmony  = harmony,
+      nam_pcs  = nam_pcs)
 }
