@@ -1,3 +1,113 @@
+#' Association testing between NAM embeddings and a sample-level variable
+#'
+#' Computes Neighborhood Aggregation Matrix (NAM) embeddings from a Seurat graph,
+#' residualizes them with respect to optional covariates, performs an SVD to obtain
+#' NAM PCs, and tests association between the NAM subspace and a numeric
+#' sample-level variable via a min-\emph{p} procedure with conditional permutations.
+#' Optionally writes the results back into the Seurat object as a reduction (`cna`)
+#' and per-cell neighborhood correlations (with FDR-thresholded variants).
+#'
+#' You can either (a) pass a Seurat object that already has a nearest-neighbor graph
+#' (e.g. created by `Seurat::FindNeighbors()`), or (b) pass `metadata` and precomputed
+#' low-dimensional coordinates (`pcs`), in which case a minimal Seurat object and graph
+#' are built internally.
+#'
+#' @param seurat_object A `Seurat` object. If provided, it must contain at least one
+#'   cell-cell graph in `object@graphs` (e.g. after `FindNeighbors()`).
+#'   If `NULL`, you must provide both `metadata` and `pcs`.
+#' @param metadata A data.frame of sample-level metadata (rows = samples, columns = covariates).
+#'   Required only when `seurat_object` is `NULL`. Must include `test_var`, any `batches`/`covs`,
+#'   and the `samplem_key` column that links samples to cells.
+#' @param pcs A numeric matrix of precomputed embeddings (rows = samples, cols = PCs)
+#'   used to build a graph when `seurat_object` is `NULL`. Ignored otherwise.
+#' @param test_var Character. Name of the numeric sample-level variable to test
+#'   (must be a column of `metadata` or `seurat_object@meta.data` after aggregation).
+#' @param samplem_key Character. Name of the sample identifier column used to map
+#'   cells to samples (present in cell-level `meta.data`) and to index `metadata`.
+#' @param graph_use Character. Name of the graph in `seurat_object@graphs` to use
+#'   (default `'RNA_snn'`). If `NULL`, the first available graph is used.
+#' @param batches Optional character vector of sample-level batch columns used only
+#'   for conditional permutation strata and batch-kurtosis QC.
+#' @param covs Optional character vector of sample-level covariate columns to residualize out
+#'   prior to association testing.
+#' @param nsteps Integer or `NULL`. Number of graph diffusion steps to form NAM.
+#'   If `NULL`, an adaptive stopping rule based on median kurtosis is used.
+#' @param verbose Logical. Print progress messages. Default `TRUE`.
+#' @param assay Character or `NULL`. Assay name for the created reduction. Default `NULL`.
+#' @param key Character. Reduction key prefix for the created reduction. Default `'NAMPC_'`.
+#' @param maxnsteps Integer. Maximum diffusion steps when using adaptive stopping. Default `15L`.
+#' @param max_frac_pcs Numeric in (0,1]. Maximum fraction of samples to use as the
+#'   upper bound on SVD PCs (also bounded by sample size). Default `0.15`.
+#' @param ks Optional integer vector of candidate numbers of NAM PCs to consider
+#'   in the min-\emph{p} procedure. If `NULL`, a data-driven sequence is used.
+#' @param Nnull Integer. Number of conditional permutations for the global test. Default `1000`.
+#' @param force_permute_all Logical. If `TRUE`, ignore `batches` and permute across all samples. Default `FALSE`.
+#' @param local_test Logical. If `TRUE`, compute neighborhood-level empirical FDR curves and thresholds. Default `TRUE`.
+#' @param seed Integer or `NULL`. RNG seed used for permutations. Default `1234`.
+#' @param return_nam Logical. If `TRUE`, store NAM embeddings/loadings/singular values/variance explained
+#'   in the returned reduction. Default `TRUE`.
+#'
+#' @return A `Seurat` object where:
+#' \itemize{
+#'   \item `reductions$cna` contains:
+#'     \itemize{
+#'       \item `embeddings`: neighborhood-by-PC NAM embeddings (nbhd x PC)
+#'       \item `loadings`: sample-by-PC NAM loadings
+#'       \item `stdev`: singular values
+#'       \item `misc`: a list with fields: `p` (global p-value), `nullminps`, `k` (selected PCs),
+#'         `ncorrs` (per-cell neighborhood correlations), `fdrs` (data.frame of FDR vs threshold),
+#'         `fdr_5p_t`, `fdr_10p_t`, `yhat`, `ycond`, `ks`, `beta`, `r2`,
+#'         `r2_perpc`, `nullr2_mean`, `nullr2_std`, projection matrix `M` and rank `r`.
+#'     }
+#'   \item `meta.data$cna_ncorrs`: per-cell (neighborhood) correlation score.
+#'   \item `meta.data$cna_ncorrs_fdr{05,10,20,30,40,50}`: thresholded versions at target FDRs.
+#' }
+#'
+#' @details
+#' **Pipeline summary:**\
+#' (1) Build NAM by diffusing sample indicators over the cell graph;\
+#' (2) Batch-kurtosis QC to drop unstable neighborhoods; \
+#' (3) Residualize NAM against covariates; \
+#' (4) SVD to obtain NAM PCs; \
+#' (5) Choose \eqn{k} via a min-\emph{p} scan over candidate `ks`; \
+#' (6) Obtain a global p-value using conditional permutations (stratified by `batches` if provided); \
+#' (7) Optionally compute neighborhood-level empirical FDR thresholds.
+#'
+#' @section Requirements:
+#' Relies on \pkg{Seurat}, \pkg{Matrix}, \pkg{RSpectra}, \pkg{moments}, \pkg{dplyr},
+#' \pkg{tibble}, \pkg{purrr}, and \pkg{glue}. Ensure a neighbor graph exists if supplying
+#' a `Seurat` object (see `Seurat::FindNeighbors()`).
+#'
+#' @seealso \code{\link[Seurat]{FindNeighbors}}, \code{\link[Seurat]{CreateSeuratObject}},
+#'   \code{\link[Seurat]{CreateDimReducObject}}
+#'
+#' @examples
+#' \dontrun{
+#' # Case A: start from an existing Seurat object with a graph
+#' obj <- Seurat::FindNeighbors(obj, reduction = "pca", dims = 1:20)
+#' obj <- association_nam(
+#'   seurat_object = obj,
+#'   test_var = "numeric_sample_trait",
+#'   samplem_key = "sample_id",
+#'   covs = c("age","sex"),
+#'   batches = "batch",
+#'   graph_use = "RNA_snn",
+#'   local_test = TRUE
+#' )
+#'
+#' # Case B: build from metadata + precomputed PCs
+#' obj2 <- association_nam(
+#'   seurat_object = NULL,
+#'   metadata = meta_df,             # rows = samples
+#'   pcs = pcs_mat,                  # rows = samples, cols = PCs
+#'   test_var = "numeric_sample_trait",
+#'   samplem_key = "sample_id",
+#'   local_test = FALSE
+#' )
+#' }
+#'
+#' @export
+
 association_nam <- function(seurat_object=NULL,
          metadata=NULL,
          pcs=NULL,

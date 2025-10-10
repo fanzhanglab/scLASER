@@ -248,5 +248,5 @@ generate_dummy_data_time_3plus <- function(n_cells = 3000, # cells of major cell
   # Shuffle rows
   # set.seed(seed*7)
   dummy_data <- dummy_data[sample(nrow(dummy_data)), ]
-  return(list(dummy_data,interact_cell_types))
+  return(dummy_data)
 }

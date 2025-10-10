@@ -1,0 +1,135 @@
+---
+title: "Longitudinal pipeline 3 time point tutorial"
+author: "fanzhang labs"
+date: "2025-10-09"
+output: html_document
+---
+
+
+
+
+## 
+Any data can be used for the longitudinal pipeline, but for this example, we will simulate a longitudinal dataset
+
+
+
+```{r}
+getwd()
+
+```
+
+
+```{r}
+dummy_data <- generate_dummy_data_time(
+  n_cells                    = 150,
+  sd_celltypes               = 0.1,
+  n_major_cell_types         = 7,
+  n_minor_cell_types         = 3,
+  relative_abundance         = 0.4,
+  n_major_interact_celltypes = 2,
+  n_minor_interact_celltypes = 2,
+  n_individuals              = 30,
+  n_batchs                   = 4,
+  interaction_feature        = "visit",
+  time_points                = 3,
+  test_var                   = "disease",
+  prop_disease               = 0.5,
+  fc_interact                = 0.6,
+  interaction_type           = "specific",
+  seed                       = 2020,
+  visit_effects_progressor   = c(0.00, 0.30, 0.60),
+  visit_effects_control      = c(0, 0, 0),
+  direction_by_cluster       = c(+1, -1, +1, -1)
+)
+    
+    
+
+    
+    
+```
+
+
+Generate PCS, these are derived from the gene expression followed by any dimension reduction technique.
+
+```{r}
+pcs = generate_pseudo_pcs_time (
+  dummy_data,
+  n_pcs = 20,
+
+  cluster_pcs = 1:20,
+  disease_pcs = 0,
+  sex_pcs = 0,
+  age_pcs = 0,
+  bmi_pcs = 0,
+  batch_pcs = 0,
+  interaction_pcs = 0,
+  visit_pcs = 0,
+  subject_pcs = 0,
+
+  scale_factor = 5,
+
+  cluster_ratio = 0.8,
+  disease_ratio = 0,
+  sex_ratio = 0,
+  age_ratio = 0,
+  bmi_ratio = 0,
+  batch_ratio = 0,
+  visit_ratio = 0,
+  interaction_ratio = 0,
+  subject_ratio = 0,
+
+  cluster_col = "cell_type",
+  disease_col = "disease",
+  sex_col = "sex",
+  age_col = "age",
+  bmi_col = "bmi",
+  batch_col = "batch",
+  visit_col = "visit",
+  interact_term_col = "interact_term",
+  seed = 2020
+)
+
+head(pcs)
+```
+
+
+
+```{r}
+
+obj = scLASER(metadata = dummy_data, pcs = pcs)
+
+```
+
+
+
+```{r}
+obj <- compute_umap(obj, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
+
+```
+
+
+```{r}
+    
+    # dd <- cbind(dummy_data, umap_res)
+    # dd$disease_time <- paste0(dd[[p$disease_col]], "_", dd[[p$visit_col]])
+    # 
+    # case_n <- round(p$n_individuals * p$prop_disease)
+    # ctrl_n <- p$n_individuals - case_n
+    # 
+    # prog_tag  <- paste(p$visit_effects_progressor, collapse = "-")
+    # title_tag <- sprintf("prog%s_cells%d_N%d_ctrl%d_case%d",
+    #                      prog_tag, p$n_cells, p$n_individuals, ctrl_n, case_n)
+    # 
+    
+ 
+ plot_celltype_proportions(obj) 
+    
+```
+
+
+
+```{r}
+
+obj = GLM_interact(obj)
+```
+
