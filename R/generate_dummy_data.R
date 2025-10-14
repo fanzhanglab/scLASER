@@ -1,3 +1,29 @@
+#' Title
+#'
+#' @param n_cells 
+#' @param sd_celltypes 
+#' @param n_major_cell_types 
+#' @param n_minor_cell_types 
+#' @param relative_abundance 
+#' @param n_major_interact_celltypes 
+#' @param n_minor_interact_celltypes 
+#' @param n_individuals 
+#' @param n_batchs 
+#' @param interaction_feature 
+#' @param time_points 
+#' @param test_var 
+#' @param prop_disease 
+#' @param fc_interact 
+#' @param interaction_type 
+#' @param seed 
+#' @param visit_effects_progressor 
+#' @param visit_effects_control 
+#' @param direction_by_cluster 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 generate_dummy_data_time <- function(
     n_cells, sd_celltypes, n_major_cell_types, n_minor_cell_types,
     relative_abundance, n_major_interact_celltypes, n_minor_interact_celltypes,

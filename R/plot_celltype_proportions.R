@@ -1,3 +1,11 @@
+#' Title
+#'
+#' @param object 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plot_celltype_proportions <- function(object) {
   stopifnot(inherits(object, "scLASER"))
 

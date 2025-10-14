@@ -1,3 +1,19 @@
+#' Title
+#'
+#' @param object 
+#' @param batch_col 
+#' @param theta 
+#' @param do_pca 
+#' @param epsilon.cluster 
+#' @param epsilon.harmony 
+#' @param max.iter.cluster 
+#' @param max.iter.harmony 
+#' @param plot_convergence 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 run_harmony <- function(object,
                         batch_col = "sample_id",
                         theta = 2,

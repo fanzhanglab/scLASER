@@ -13,10 +13,7 @@ Any data can be used for the longitudinal pipeline, but for this example, we wil
 
 
 
-```{r}
-getwd()
 
-```
 
 
 ```{r}
@@ -135,7 +132,9 @@ obj <- run_harmony(obj, batch_col = "sample_id", theta = 2,
 
 ```{r}
 
-obj = association_nam_scLASER(object = obj,
+
+
+obj = association_nam_scLASER (object = obj,
   test_var          = "test_var_cna",
   samplem_key       = "subject_id",
   graph_use         = "RNA_nn",
@@ -154,11 +153,25 @@ obj = association_nam_scLASER(object = obj,
   seed              = 1234,
   return_nam        = F
 )
+
+saveRDS(obj,"sclaser_obj.rds")
 ```
 
 
 
 ```{r}
-obj = longAnalyses_plusModelSelection(obj)
+rownames(obj@nam_pcs) = obj@metadata$sample_id
+obj = longAnalyses_plusModelSelection_scLASER(obj ,
+                                              disease_var = "disease",
+                                              subject_var ="subject_id",
+                                              sample_var="sample_id",
+                                              time_var =  "visit",
+                                              covariates = c("age", "sex"))
+```
+
+
+
+```{r}
+obj@pipeline_output
 ```
 

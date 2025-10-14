@@ -1,3 +1,15 @@
+#' Title
+#'
+#' @param object 
+#' @param n_neighbors 
+#' @param metric 
+#' @param min_dist 
+#' @param ... 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 compute_umap <- function(object,
                                  n_neighbors = 30,
                                  metric = "cosine",
