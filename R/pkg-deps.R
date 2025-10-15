@@ -37,8 +37,6 @@
 #' @import MOFA2
 #' @import shapviz
 #' @import xgboost
-#' @import lisi
 #' @import parallel
-#' @import RANN
 #' @import rstan
 NULL
