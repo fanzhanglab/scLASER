@@ -30,12 +30,10 @@ longAnalyses_plusModelSelection_scLASER <- function(
   meta <- object@metadata
   pcs  <- object@nam_pcs
   
-  # ensure required columns exist
   need <- c(disease_var, time_var, subject_var, sample_var, covariates)
   miss <- setdiff(need[!is.null(need)], names(meta))
   if (length(miss)) stop("Missing columns in metadata: ", paste(miss, collapse = ", "))
   
-  # rownames(pcs) must be sample IDs so we can map sample -> PC score per cell
   if (is.null(rownames(pcs))) {
     stop("rownames(@nam_pcs) are NULL; they must be sample IDs matching '", sample_var, "'.")
   }
@@ -44,53 +42,80 @@ longAnalyses_plusModelSelection_scLASER <- function(
     stop("Some ", sample_var, " not found in rownames(@nam_pcs). Example: ", paste(head(bad, 5), collapse = ", "))
   }
   
-  # prep once (types)
+  # --- prep types (key tweak: continuous time must be numeric; for 2TP ensure 0/1) ---
   tmp_base <- meta
-  tmp_base[[disease_var]] <- as.factor(tmp_base[[disease_var]])
+  tmp_base[[disease_var]] <- factor(tmp_base[[disease_var]])
+  # continuous time (numeric)
+  if (!is.numeric(tmp_base[[time_var]])) {
+    tf <- factor(tmp_base[[time_var]])
+    # map to 0,1,... (for 2TP this becomes 0/1 automatically)
+    tmp_base[[time_var]] <- as.numeric(tf) - 1L
+  }
+  # categorical time (factor copy)
   time_fac_var <- paste0(time_var, "_fac__tmp")
-  tmp_base[[time_fac_var]] <- as.factor(tmp_base[[time_var]])
+  tmp_base[[time_fac_var]] <- factor(meta[[time_var]])
   
-  # covariate RHS helper
+  # covariates
   covar_str <- if (length(covariates) && !is.null(covariates)) paste(covariates, collapse = " + ") else NULL
   rhs_plus_covars <- function(core_rhs) if (is.null(covar_str)) core_rhs else paste(core_rhs, "+", covar_str)
   
-  # model RHS (fixed) templates
-  rhs_m1_tpl <- rhs_plus_covars(sprintf("%s * %s", disease_var, time_var))
-  rhs_m2_tpl <- rhs_plus_covars(sprintf("%s * %s", disease_var, time_fac_var))
-  rhs_m3_tpl <- rhs_plus_covars(sprintf("%s * %s + %s * I(%s^2)", disease_var, time_var, disease_var, time_var))
-  rand_f     <- stats::as.formula(sprintf("~ 1 | %s/%s", subject_var, sample_var))
+  # 3TP logic (works for 2TP as well)
+  rhs_m1_tpl <- rhs_plus_covars(sprintf("%s * %s", disease_var, time_var))                 # continuous time
+  rhs_m2_tpl <- rhs_plus_covars(sprintf("%s * %s", disease_var, time_fac_var))            # categorical time
+  rhs_m3_tpl <- rhs_plus_covars(sprintf("%s * %s + %s * I(%s^2)",                         # quadratic time
+                                        disease_var, time_var, disease_var, time_var))
+  
+  # random effects (same as yours)
+  rand_f <- stats::as.formula(sprintf("~ 1 | %s/%s", subject_var, sample_var))
+  ctrl   <- nlme::lmeControl(opt = "optim", msMaxIter = 200, returnObject = TRUE)
+  
+  # safe fitter that returns NULL on any fitting/singularity issue
+  fit_safe <- function(fml, data) {
+    tryCatch(
+      nlme::lme(fixed = fml, random = rand_f, data = data, method = "ML", control = ctrl),
+      error = function(e) NULL
+    )
+  }
+  
+  pc_names <- colnames(pcs)
   
   fit_one_pc <- function(pc_name) {
-    # map sample-level PC to each cell via sample_var
     out_vec <- pcs[ tmp_base[[sample_var]], pc_name ]
     out_col <- ".tmp_outcome__NAMPC"
     tmp <- tmp_base
     tmp[[out_col]] <- out_vec
     
-    f_m1 <- stats::as.formula(sprintf("%s ~ %s", out_col, rhs_m1_tpl))
-    f_m2 <- stats::as.formula(sprintf("%s ~ %s", out_col, rhs_m2_tpl))
-    f_m3 <- stats::as.formula(sprintf("%s ~ %s", out_col, rhs_m3_tpl))
+    # build formulas
+    f_m1   <- stats::as.formula(sprintf("%s ~ %s", out_col, rhs_m1_tpl))
+    f_m2   <- stats::as.formula(sprintf("%s ~ %s", out_col, rhs_m2_tpl))
+    f_m3   <- stats::as.formula(sprintf("%s ~ %s", out_col, rhs_m3_tpl))
     
-    m1 <- nlme::lme(fixed = f_m1, random = rand_f, data = tmp, method = "ML",
-                    control = nlme::lmeControl(opt = "optim"))
-    m2 <- nlme::lme(fixed = f_m2, random = rand_f, data = tmp, method = "ML",
-                    control = nlme::lmeControl(opt = "optim"))
-    m3 <- nlme::lme(fixed = f_m3, random = rand_f, data = tmp, method = "ML",
-                    control = nlme::lmeControl(opt = "optim"))
+    m1 <- fit_safe(f_m1, tmp)
+    m2 <- fit_safe(f_m2, tmp)
+    m3 <- fit_safe(f_m3, tmp)
     
-    fits <- list(m1 = m1, m2 = m2, m3 = m3)
+    fits <- Filter(Negate(is.null), list(m1 = m1, m2 = m2, m3 = m3))
+    if (length(fits) == 0L) {
+      return(data.frame(
+        NAMscore = pc_name, best_model = NA, coefficient = NA,
+        t.value = NA, `p-value` = NA, lrt_pval = NA, AIC = NA,
+        row.names = NULL, check.names = FALSE
+      ))
+    }
+    
     fit_tbl <- dplyr::tibble(
-      model = names(fits),
-      k     = vapply(fits, function(x) attr(stats::logLik(x), "df"), numeric(1)),
-      logLik= vapply(fits, function(x) as.numeric(stats::logLik(x)), numeric(1)),
-      AIC   = vapply(fits, stats::AIC, numeric(1)),
-      BIC   = vapply(fits, stats::BIC, numeric(1))
-    ) |> dplyr::arrange(.data$AIC)
+      model  = names(fits),
+      k      = vapply(fits, function(x) attr(stats::logLik(x), "df"), numeric(1)),
+      logLik = vapply(fits, function(x) as.numeric(stats::logLik(x)), numeric(1)),
+      AIC    = vapply(fits, stats::AIC, numeric(1)),
+      BIC    = vapply(fits, stats::BIC, numeric(1))
+    ) |>
+      dplyr::arrange(.data$AIC)
     
     best_name <- fit_tbl$model[1]
     best_fit  <- fits[[best_name]]
     
-    # null model (drop interaction)
+    # build the matched null (drop interaction, keep main effects)
     if (best_name == "m1") {
       rhs_null <- rhs_plus_covars(sprintf("%s + %s", disease_var, time_var))
     } else if (best_name == "m2") {
@@ -99,11 +124,12 @@ longAnalyses_plusModelSelection_scLASER <- function(
       rhs_null <- rhs_plus_covars(sprintf("%s + %s + I(%s^2)", disease_var, time_var, time_var))
     }
     f_null   <- stats::as.formula(sprintf("%s ~ %s", out_col, rhs_null))
-    null_fit <- nlme::lme(fixed = f_null, random = rand_f, data = tmp, method = "ML",
-                          control = nlme::lmeControl(opt = "optim"))
-    lrt <- stats::anova(null_fit, best_fit)
+    null_fit <- fit_safe(f_null, tmp)
     
-    tTab <- summary(best_fit)$tTable
+    lrt <- if (!is.null(null_fit)) stats::anova(null_fit, best_fit) else NA
+    lrt_p <- if (is.data.frame(lrt) && nrow(lrt) >= 2 && "p-value" %in% colnames(lrt)) lrt$`p-value`[2] else NA_real_
+    
+    # label best model
     best_model_desc <- dplyr::case_when(
       best_name == "m1" ~ "time as continuous",
       best_name == "m2" ~ "time as categorical",
@@ -111,20 +137,19 @@ longAnalyses_plusModelSelection_scLASER <- function(
       TRUE ~ NA_character_
     )
     
-    out_df <- data.frame(
+    tTab <- summary(best_fit)$tTable
+    data.frame(
       NAMscore    = pc_name,
       best_model  = best_model_desc,
       coefficient = rownames(tTab),
       tTab,
-      lrt_pval    = lrt$`p-value`[2],
+      lrt_pval    = lrt_p,
       AIC         = fit_tbl$AIC[1],
       row.names   = NULL,
       check.names = FALSE
     )
-    out_df
   }
   
-  pc_names <- colnames(pcs)
   results_list <- lapply(pc_names, fit_one_pc)
   results_all  <- do.call(rbind, results_list)
   

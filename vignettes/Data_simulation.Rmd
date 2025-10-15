@@ -1,0 +1,177 @@
+---
+title: "Data simulation"
+output: html_notebook
+---
+
+generate_dummy_data_time 
+
+This function simulates a longitudinal single-cell dataset with subjects measured over multiple visits and split into disease and control groups. You define the cohort size, number of visits, batches, and the mix of common and rare cell types, along with baseline variability in their abundances. The function embeds a biologically meaningful change in composition over time that depends on group, so interacting cell types rise or fall across visits according to the effect pattern you specify, with adjustable magnitude.
+
+For more complex designs with three or more visits, you can shape the signal at each visit and choose the direction of change for selected cell types. The result is a long, per-cell table that includes subject, sample, visit, group, demographics, batch, body mass index, and a cell-type label.
+
+
+```{r}
+dummy_data = generate_dummy_data_time(
+  n_cells = 100,
+  sd_celltypes = 0.1,
+  n_major_cell_types = 7,
+  n_minor_cell_types = 3,
+  relative_abundance = 0.4,
+  n_major_interact_celltypes = 2,
+  n_minor_interact_celltypes = 2,
+  n_individuals = 30,
+  n_batchs = 4,
+  interaction_feature = "visit",
+  time_points = 2,
+  test_var = "disease",       
+  prop_disease = 0.5,
+  fc_interact = 0.6,
+  interaction_type = "specific",
+  seed = 1234
+)
+```
+
+
+
+```{r}
+obj_data = scLASER(metadata = dummy_data[[1]])
+
+plot_celltype_proportions(obj_data)
+```
+
+
+5 time point example
+
+
+The parameters `visit_effects_progressor`, `visit_effects_control`, and `direction_by_cluster` together define how cell-type abundances evolve over time and differ between disease and control groups in the simulated dataset.
+
+The argument `visit_effects_progressor` specifies the relative change in abundance for disease-positive individuals across visits, with each value representing a proportional increase or decrease compared to the baseline. For example, specifying values such as 0.00, 0.30, 0.60, 0.20, and 0.40 means that progressors begin with no change at the first visit and then exhibit approximately 30%, 60%, 20%, and 40% increases in interacting cell-type abundance at subsequent time points. 
+
+The argument `visit_effects_control` sets the corresponding effects for the control group; using zeros indicates that control individuals maintain a stable abundance across all visits, serving as a baseline reference. 
+
+The argument `direction_by_cluster` determines whether each interacting cell type increases or decreases in response to these visit-specific effects. A positive value indicates an upward trend in abundance, while a negative value indicates a downward trend.
+
+
+
+```{r}
+dummy_data <- generate_dummy_data_time(
+  n_cells                    = 150,
+  sd_celltypes               = 0.1,
+  n_major_cell_types         = 7,
+  n_minor_cell_types         = 3,
+  relative_abundance         = 0.4,
+  n_major_interact_celltypes = 2,
+  n_minor_interact_celltypes = 2,
+  n_individuals              = 30,
+  n_batchs                   = 4,
+  interaction_feature        = "visit",
+  time_points                = 5,
+  test_var                   = "disease",
+  prop_disease               = 0.5,
+  fc_interact                = 0.6,
+  interaction_type           = "specific",
+  seed                       = 2020,
+  visit_effects_progressor   = c(0.00, 0.30, 0.60, 0.2, 0.4),
+  visit_effects_control      = c(0, 0, 0, 0,0),
+  direction_by_cluster       = c(+1, -1, +1, -1)
+)
+    
+    
+```
+
+```{r}
+obj_data = scLASER(metadata = dummy_data)
+
+plot_celltype_proportions(obj_data)
+```
+
+```{r}
+totals <- obj@metadata %>%
+  count(subject_id, visit, disease, name = "n_total")
+
+b_counts <- obj@metadata %>%
+  dplyr::filter(cell_type == "A") %>%
+  count(subject_id, visit, disease, name = "n_B")
+
+df <- totals %>%
+  left_join(b_counts, by = c("subject_id","visit","disease")) %>%
+  mutate(
+    n_B    = replace_na(n_B, 0L),
+    prop_B = n_B / n_total
+  )
+
+df$disease <- factor(df$disease, levels = c(0,1), labels = c("Control","Disease"))
+
+df_sum <- df %>%
+  group_by(disease, visit) %>%
+  summarise(
+    mean_prop = mean(prop_B, na.rm = TRUE),
+    se        = sd(prop_B, na.rm = TRUE) / sqrt(dplyr::n()),
+    ymin      = mean_prop - 1.96 * se,
+    ymax      = mean_prop + 1.96 * se,
+    .groups   = "drop"
+  )
+
+ggplot(df, aes(x = as.numeric(visit), y = prop_B, group = subject_id, color = disease)) +
+  geom_line(alpha = 0.2) +  # individual subjects
+  geom_line(data = df_sum,
+            aes(y = mean_prop, group = disease, color = disease),
+            linewidth = 1.2) +
+  geom_point(data = df_sum,
+             aes(y = mean_prop, group = disease, color = disease),
+             size = 2) +
+  scale_x_continuous(breaks = sort(unique(as.numeric(df$visit)))) +
+  labs(
+    x = "Visit",
+    y = "Proportion of cell type B",
+    color = "Group",
+  ) +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+
+```
+
+
+generate_pseudo_pcs_time
+
+This function produces a simulated matrix of principal component–like features that reflect structured variation across biological and technical factors in the dataset. Each column represents a synthetic latent axis, with its variance scaled to mimic real PC distributions and with controlled contributions from cluster identity, disease status, sex, age, batch, visit, and interaction effects. By adjusting the ratio parameters, users can determine how strongly each source of variation influences a given component, while the scaling factor controls overall variance decay. This framework allows the creation of reproducible, interpretable pseudo-PC matrices that resemble dimensionality-reduced transcriptomic data but with a known ground truth, supporting method development and benchmarking for longitudinal association models and cell-type deconvolution analyses.
+
+```{r}
+pcs_matrix <- generate_pseudo_pcs_time(
+  dummy_data,                      
+  n_pcs = 20,
+  cluster_pcs = 1:20,
+  disease_pcs = 0,
+  sex_pcs = 0,
+  age_pcs = 0,
+  bmi_pcs = 0,
+  batch_pcs = 0,
+  interaction_pcs = 0,
+  visit_pcs = 0,
+  subject_pcs = 0,
+
+  cluster_ratio = 0.8,
+  disease_ratio = 0,
+  sex_ratio = 0,
+  age_ratio = 0,
+  bmi_ratio = 0,
+  batch_ratio = 0,
+  interaction_ratio = 0,
+  visit_ratio = 0,
+  subject_ratio = 0,
+
+  scale_factor = 5,
+  cluster_col = "cell_type",
+  sex_col = "sex",
+  age_col = "age",
+  bmi_col = "bmi",
+  batch_col = "batch",
+  disease_col = "disease",
+  visit_col = "visit",
+
+  seed = 1234
+)
+
+```
+
