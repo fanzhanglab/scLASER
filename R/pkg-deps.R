@@ -40,7 +40,5 @@
 #' @import lisi
 #' @import parallel
 #' @import RANN
-#' @import nnTensor
-#' @import lgpr
 #' @import rstan
 NULL

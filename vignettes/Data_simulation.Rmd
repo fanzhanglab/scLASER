@@ -3,6 +3,9 @@ title: "Data simulation"
 output: html_notebook
 ---
 
+
+
+
 generate_dummy_data_time 
 
 This function simulates a longitudinal single-cell dataset with subjects measured over multiple visits and split into disease and control groups. You define the cohort size, number of visits, batches, and the mix of common and rare cell types, along with baseline variability in their abundances. The function embeds a biologically meaningful change in composition over time that depends on group, so interacting cell types rise or fall across visits according to the effect pattern you specify, with adjustable magnitude.
