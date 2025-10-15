@@ -37,5 +37,4 @@
 #' @import shapviz
 #' @import xgboost
 #' @import parallel
-#' @import rstan
 NULL
