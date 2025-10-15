@@ -6,7 +6,6 @@
 #' @import stats
 #' @import utils
 #' @import Matrix
-#' @import tibble
 #' @import dplyr
 #' @import tidyr
 #' @import purrr
