@@ -1,24 +1,24 @@
 #' Title
 #'
-#' @param n_cells 
-#' @param sd_celltypes 
-#' @param n_major_cell_types 
-#' @param n_minor_cell_types 
-#' @param relative_abundance 
-#' @param n_major_interact_celltypes 
-#' @param n_minor_interact_celltypes 
-#' @param n_individuals 
-#' @param n_batchs 
-#' @param interaction_feature 
-#' @param time_points 
-#' @param test_var 
-#' @param prop_disease 
-#' @param fc_interact 
-#' @param interaction_type 
-#' @param seed 
-#' @param visit_effects_progressor 
-#' @param visit_effects_control 
-#' @param direction_by_cluster 
+#' @param n_cells
+#' @param sd_celltypes
+#' @param n_major_cell_types
+#' @param n_minor_cell_types
+#' @param relative_abundance
+#' @param n_major_interact_celltypes
+#' @param n_minor_interact_celltypes
+#' @param n_individuals
+#' @param n_batchs
+#' @param interaction_feature
+#' @param time_points
+#' @param test_var
+#' @param prop_disease
+#' @param fc_interact
+#' @param interaction_type
+#' @param seed
+#' @param visit_effects_progressor
+#' @param visit_effects_control
+#' @param direction_by_cluster
 #'
 #' @return
 #' @export
@@ -86,9 +86,9 @@ generate_dummy_data_time_3plus <- function(n_cells = 3000, # cells of major cell
                           bmi = rep(bmi,time_points),
                           interaction = paste0(interaction_feature,":",test_var)
   )
-  print(head(dummy_data))
+#  print(head(dummy_data))
   dummy_data$interact_term = dummy_data[,interaction_feature] * (as.integer(dummy_data[,test_var]))
-  print(head(dummy_data))
+ # print(head(dummy_data))
   # Major and rare cell type counts
   ## major_cell_types <- ceiling(n_cell_types / 2)
   major_cell_types <- n_major_cell_types
@@ -101,18 +101,18 @@ generate_dummy_data_time_3plus <- function(n_cells = 3000, # cells of major cell
   # Generate baseline of cell type data.frame
   for (id in dummy_data$sample_id){
     # set.seed(seed*5*grep(id,dummy_data$sample_id)*10)
-    print(paste("sample_id:", id, sep=" "))
+  #  print(paste("sample_id:", id, sep=" "))
     major_cell_counts <- round(runif(major_cell_types, n_cells-n_cells*sd_celltypes, n_cells+n_cells*sd_celltypes))
-    print(paste("major_cell_counts:", major_cell_counts, sep=" "))
+  #  print(paste("major_cell_counts:", major_cell_counts, sep=" "))
     # set.seed(seed*6*grep(id,dummy_data$sample_id)*10)
     rare_cell_counts <- round(runif(rare_cell_types, n_cells*relative_abundance-n_cells*relative_abundance*sd_celltypes, n_cells*relative_abundance+n_cells*relative_abundance*sd_celltypes))
-    print(paste("rare_cell_counts:", rare_cell_counts, sep=" "))
+  #  print(paste("rare_cell_counts:", rare_cell_counts, sep=" "))
     cell_counts <- c(major_cell_counts, rare_cell_counts)
-    print(paste("total cell_counts:", sum(major_cell_counts, rare_cell_counts), sep=" "))
+   # print(paste("total cell_counts:", sum(major_cell_counts, rare_cell_counts), sep=" "))
     for (i in 1:n_cell_types) {
       n <- cell_counts[i]
-      print(paste("n:", n, sep=" "))
-      print(dim(celltype_df))
+    #  print(paste("n:", n, sep=" "))
+    #  print(dim(celltype_df))
       celltype_df = rbind(celltype_df,
                           data.frame(cell_type = rep(LETTERS[seq( from = 1, to = n_cell_types )][i], n),
                                      sample_id = id)
