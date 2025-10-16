@@ -1,30 +1,30 @@
 # Required libraries
 
 # remotes::install_version("Matrix", version = "1.6-3")
-suppressWarnings({
-  library(dplyr)
-  library(tidyr)
- # library(tidyverse)
-  library(MASS) # Used for sampling from normal distribution
-  library(caret)
-  
-  library(Seurat)
-  library(glue)
-  
-  library(stevemisc)
-  library(stevedata)
-  library(lme4)
-  library(broom.mixed)
-  
-  # With parallelism
-  library(doParallel)
-  library(foreach)
-  library(pbapply)
-  
-  library(variancePartition)
-  
-  library(Seurat)
-})
+# suppressWarnings({
+#   library(dplyr)
+#   library(tidyr)
+#  # library(tidyverse)
+#   library(MASS) # Used for sampling from normal distribution
+#   library(caret)
+#
+#   library(Seurat)
+#   library(glue)
+#
+#   library(stevemisc)
+#   library(stevedata)
+#   library(lme4)
+#   library(broom.mixed)
+#
+#   # With parallelism
+#   library(doParallel)
+#   library(foreach)
+#   library(pbapply)
+#
+#   library(variancePartition)
+#
+#   library(Seurat)
+# })
 
 # Functions
 ## generate meta data
@@ -33,7 +33,7 @@ suppressWarnings({
 #' @noRd
 #' @keywords internal
 generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major cell types per individual
-                                              sd_celltypes = 0.1,  # standard deviation of number of cells 
+                                              sd_celltypes = 0.1,  # standard deviation of number of cells
                                               n_major_cell_types = 7,
                                               n_minor_cell_types = 3,
                                               relative_abundance = 0.1, # ratio between major and rare
@@ -41,13 +41,13 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
                                               n_minor_diff_celltypes = 1,
                                               n_individuals = 30, # total individuals
                                               n_batchs = 4,
-                                              prop_sex = 0.5, 
-                                              prop_disease = 0.5,  
+                                              prop_sex = 0.5,
+                                              prop_disease = 0.5,
                                               fc_interact = 0.1, # additional proportion of interacted cells which are from people with interacted group compared to non-interacted cell types
                                               seed = 1234
 ) {
   n_cell_types = n_major_cell_types + n_minor_cell_types
-  
+
   # Generate unique subject IDs
   subject_id <- paste0("SUB_", 1:n_individuals)
   set.seed(seed)
@@ -78,18 +78,18 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
                           age = age,
                           batch = factor(batch, levels = c(0:max(batch))),
                           bmi = bmi
-  ) 
-  
+  )
+
   # Major and rare cell type counts
   ## major_cell_types <- ceiling(n_cell_types / 2)
   major_cell_types <- n_major_cell_types
   ## rare_cell_types <- n_cell_types - major_cell_types
   rare_cell_types <- n_minor_cell_types
-  
+
   celltype_df <- data.frame(matrix(ncol = 2, nrow = 0))
   colnames(celltype_df) <- c("cell_type", "subject_id")
-  
-  # Generate baseline of cell type data.frame 
+
+  # Generate baseline of cell type data.frame
   for (id in dummy_data$subject_id){
     set.seed(seed*5*grep(id,dummy_data$subject_id)*10)
     major_cell_counts <- round(runif(major_cell_types, n_cells-n_cells*sd_celltypes, n_cells+n_cells*sd_celltypes))
@@ -104,7 +104,7 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
       )
     }
   }
-  
+
   # check
   ## celltype_df %>%
   ##   dplyr::group_by(subject_id) %>%
@@ -114,11 +114,11 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
   ##   dplyr::group_by(cell_type,subject_id) %>%
   ##   dplyr::summarise(count = dplyr::n()) %>%
   ##   as.data.frame()
-  
+
   diff_clusters = c(1:n_major_diff_celltypes, (n_cell_types-n_minor_diff_celltypes+1):n_cell_types)
   diff_cell_types = LETTERS[diff_clusters]
   prop_control_types <- 0.1
-  
+
   for (i in LETTERS[1:n_cell_types]) {
     abundance = dplyr::left_join(celltype_df,
                                  dummy_data,
@@ -128,7 +128,7 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
       dplyr::summarise(pro = dplyr::n()/n_cells,
                        count = dplyr::n())
     if(i %in% diff_cell_types){
-      
+
       # abundance = dplyr::left_join(celltype_df,
       #                              dummy_data,
       #                              by="subject_id") %>%
@@ -136,7 +136,7 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
       #   dplyr::group_by(subject_id) %>%
       #   dplyr::summarise(pro = dplyr::n()/n_cells,
       #                    count = dplyr::n())
-      
+
       # prop(ortion) = cells for each subject that are this cell type
       print(head(abundance))
       # diff is the number of cells that the differential cell types should have (use fc_interact to scale/increase)
@@ -145,12 +145,12 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
       print(paste("n_cells = ", n_cells, "; median pro = ", median(abundance$pro), " ; median pro increase = ", (median(abundance$pro)*(1+fc_interact))))
       print(paste("i = ", i))
       i# add diff cells only to disease == 1
-      
+
       len = length(unique(dummy_data[dummy_data$disease == "1",]$subject_id)) * diff
       #print(paste("unique(dummy_data[dummy_data$disease == '1',]$subject_id) : ", unique(dummy_data[dummy_data$disease == "1",]$subject_id)))
       # unique... is the number of subjects with disease == 1?
       print(paste("len = ", len))
-      
+
       celltype_df = rbind(
         data.frame(cell_type = rep(i, len),
                    subject_id = rep(unique(dummy_data[dummy_data$disease == "1",]$subject_id),diff)),
@@ -170,7 +170,7 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
                    subject_id = rep(unique(dummy_data[dummy_data$disease == "0",]$subject_id),diff_control)),
         celltype_df
       )
-      
+
     }
   }
   dummy_data = merge(dummy_data,celltype_df,by="subject_id")
@@ -185,9 +185,9 @@ generate_dummy_data_woInteraction <- function(n_cells = 3000, # cells of major c
 #' Title (optional, can be brief)
 #' @noRd
 #' @keywords internal
-generate_pseudo_pcs_woInteraction = function(data, 
+generate_pseudo_pcs_woInteraction = function(data,
                                              # number of principal components
-                                             n_pcs = 20, 
+                                             n_pcs = 20,
                                              # Among the principal components representing each attribute, arrange the components in descending order of variance.
                                              cluster_pcs = 1:20,
                                              disease_pcs = 0,
@@ -195,7 +195,7 @@ generate_pseudo_pcs_woInteraction = function(data,
                                              age_pcs = 0,
                                              bmi_pcs = 0,
                                              batch_pcs = 0,
-                                             
+
                                              scale_factor = 2,
                                              # Define the maximum percentage of each attribute
                                              cluster_ratio = 0.25,
@@ -204,7 +204,7 @@ generate_pseudo_pcs_woInteraction = function(data,
                                              age_ratio = 0,
                                              bmi_ratio = 0,
                                              batch_ratio = 0,
-                                             
+
                                              cluser_col = "cell_type",
                                              disease_col = "disease",
                                              sex_col = "sex",
@@ -223,14 +223,14 @@ generate_pseudo_pcs_woInteraction = function(data,
   bmi_pcs = sample(bmi_pcs)
   set.seed(seed*5)
   batch_pcs = sample(batch_pcs)
-  
+
   sapply(1:n_pcs, function(x){
-    
+
     n_cells <- nrow(data)
     n_clusters <- length(unique(data[,cluser_col]))
     n_pcs <- n_pcs
-    
-    cell_clusters <- as.integer(factor(data[,cluser_col])) 
+
+    cell_clusters <- as.integer(factor(data[,cluser_col]))
     for (j in 1:3){
       cell_clusters_tmp = cell_clusters
       set.seed(x*j)
@@ -248,7 +248,7 @@ generate_pseudo_pcs_woInteraction = function(data,
     cell_bmi <- as.integer(factor(data[,bmi_col]))
     cell_batch <- as.integer(factor(data[,batch_col]))
     cell_diseases <- as.integer(factor(data[,disease_col]))
-    
+
     variance <- 1 / (x * scale_factor)  # Set so that the variance decreases as the principal component goes from 1 to 20.
     set.seed(seed*x)
     pc = rnorm(n_cells, mean = 0, sd = sqrt(variance))
@@ -258,7 +258,7 @@ generate_pseudo_pcs_woInteraction = function(data,
     #   if (j==1){
     #     pc_cluster = rnorm(n_cells, mean = scale(eval(parse(text=paste0("cell_clusters",j)))), sd = sqrt(variance))
     #   } else {
-    #     pc_cluster = pc_cluster + rnorm(n_cells, mean = scale(eval(parse(text=paste0("cell_clusters",j)))), sd = sqrt(variance)) 
+    #     pc_cluster = pc_cluster + rnorm(n_cells, mean = scale(eval(parse(text=paste0("cell_clusters",j)))), sd = sqrt(variance))
     #   }
     # }
     set.seed(seed*x)
@@ -296,7 +296,7 @@ generate_pseudo_pcs_woInteraction = function(data,
                  -age_ratio_tmp
                  -bmi_ratio_tmp
                  -batch_ratio_tmp
-    ) + 
+    ) +
       pc_cluster * cluster_ratio_tmp +
       pc_disease * disease_ratio_tmp +
       pc_sex * sex_ratio_tmp +
@@ -319,7 +319,7 @@ generate_pseudo_features = function(data,
                                     bmi_features = 0,
                                     batch_features = 0,
                                     individual_features = 0,
-                                    
+
                                     cluster_ratio = 0.25,
                                     disease_ratio = 0,
                                     sex_ratio = 0,
@@ -328,7 +328,7 @@ generate_pseudo_features = function(data,
                                     batch_ratio = 0,
                                     individual_ratio = 0.1,
                                     ratio_variance = 0.5,
-                                    
+
                                     cluster_col = "cell_type",
                                     disease_col = "disease",
                                     sex_col = "sex",
@@ -340,11 +340,11 @@ generate_pseudo_features = function(data,
                                     n_thread = 1,
                                     verbose = TRUE
 ) {
-  
-  library(doParallel)
-  library(foreach)
-  library(dplyr)
-  
+
+  # library(doParallel)
+  # library(foreach)
+  # library(dplyr)
+
   set.seed(seed)
   disease_features = sample(disease_features)
   set.seed(seed*2)
@@ -357,25 +357,25 @@ generate_pseudo_features = function(data,
   batch_features = sample(batch_features)
   set.seed(seed*6)
   individual_features = sample(individual_features)
-  
+
   # Register parallel backend to use multiple cores
   cl <- makeCluster(n_thread) # Leave one core free for other processes
   registerDoParallel(cl)
-  
+
   pcs_list = foreach(x = 1:n_features, .packages = c("dplyr")) %dopar% {
-    
+
     n_cells <- nrow(data)
     n_clusters <- length(unique(data[,cluster_col]))
-    
+
     cell_sex <- as.integer(factor(data[,sex_col]))
     cell_age <- as.integer(factor(data[,age_col]))
     cell_bmi <- as.integer(factor(data[,bmi_col]))
     cell_batch <- as.integer(factor(data[,batch_col]))
     cell_diseases <- as.integer(factor(data[,disease_col]))
     cell_individual <- as.integer(factor(data[,individual_col]))
-    
+
     var_all <- c()
-    
+
     # Generate dummy features reflecting cell clusters
     ## CELL CLUSTERS
     cell_clusters <- as.integer(factor(data[,cluster_col]))
@@ -411,7 +411,7 @@ generate_pseudo_features = function(data,
     ### =====
     pc_cluster = rnorm(n_cells, mean = scale(cell_clusters_means1), sd = sqrt(variance))
     var_all = c(var_all, variance)
-    
+
     ## DISEASE
     # Similary, generate dummy PC for other covariates with changing seeds
     cell_covariate = cell_diseases
@@ -436,7 +436,7 @@ generate_pseudo_features = function(data,
     ##   dplyr::summarize(mean_pc = mean(pc_disease),
     ##                    sd_pc = sd(pc_disease))
     var_all = c(var_all, variance)
-    
+
     ## SEX
     cell_covariate = cell_sex
     for (j in 1:2){
@@ -455,7 +455,7 @@ generate_pseudo_features = function(data,
     set.seed(seed*x*3)
     pc_sex = rnorm(n_cells, mean = scale(cell_covariates_means1), sd = sqrt(variance))
     var_all = c(var_all, variance)
-    
+
     # Treat age as fixed effect for PC mean
     ## AGE
     cell_covariate = cell_age
@@ -543,13 +543,13 @@ generate_pseudo_features = function(data,
       dplyr::group_by(cell_covariate) %>%
       dplyr::summarize(mean_pc = mean(pc_individual),
                        sd_pc = sd(pc_individual))
-    
+
     # Generate dummy PC regardless cell types or other covariates (noise term)
     set.seed(seed*x*100)
     variance = sample(var_all,n_cells)
     set.seed(seed*x*100)
     pc = rnorm(n_cells, mean = 0, sd = sqrt(variance))
-    
+
     cluster_ratio_tmp = cluster_ratio + runif(1, min = -cluster_ratio*ratio_variance, max = cluster_ratio*ratio_variance)
     disease_ratio_tmp = disease_ratio + runif(1, min = -disease_ratio*ratio_variance, max = disease_ratio*ratio_variance)
     sex_ratio_tmp = sex_ratio + runif(1, min = -sex_ratio*ratio_variance, max = sex_ratio*ratio_variance)
@@ -564,7 +564,7 @@ generate_pseudo_features = function(data,
     if (!(x %in% bmi_features)) bmi_ratio_tmp = 0
     if (!(x %in% batch_features)) batch_ratio_tmp = 0
     if (!(x %in% individual_features)) individual_ratio_tmp = 0
-    
+
     noise_ratio_tmp = (1
                        -cluster_ratio_tmp
                        -disease_ratio_tmp
@@ -575,7 +575,7 @@ generate_pseudo_features = function(data,
                        -individual_ratio_tmp
     )
     if (noise_ratio_tmp < 0) noise_ratio_tmp = 0
-    
+
     if(verbose){
       message(paste0("Feature",x,";\ncluster ratio = ",cluster_ratio_tmp,
                      "\ndisease ratio = ", disease_ratio_tmp,
@@ -596,9 +596,9 @@ generate_pseudo_features = function(data,
              scale(pc_individual) * individual_ratio_tmp
     )
   }
-  
+
   stopCluster(cl)
-  
+
   pcs <- do.call(cbind, pcs_list)
   return(pcs)
 }
@@ -610,25 +610,25 @@ conditional_permutation <- function(B, Y, num) {
   purrr::map(seq_len(num), function(i) {
     split(seq_len(length(Y)), B) %>% purrr::map(function(idx) {
       data.frame(idx, val=sample(Y[idx]))
-    }) %>% dplyr::bind_rows() %>% 
-      dplyr::arrange(idx) %>% 
-      with(val)    
-  }) %>% 
+    }) %>% dplyr::bind_rows() %>%
+      dplyr::arrange(idx) %>%
+      with(val)
+  }) %>%
     purrr::reduce(Matrix::cbind2)
 }
 
 #' Title (optional, can be brief)
 #' @noRd
 #' @keywords internal
-empirical_fdrs <- function(z, znull, thresholds) {    
+empirical_fdrs <- function(z, znull, thresholds) {
   n <- length(thresholds) - 1
   tails <- t(tail_counts(thresholds, znull)[1:n, ])
   ranks <- t(tail_counts(thresholds, z)[1:n, ])
-  
+
   # compute FDPs
   fdp <- sweep(tails, 2, ranks, '/')
   fdr <- Matrix::colMeans(fdp)
-  
+
   return(fdr)
 }
 
@@ -637,7 +637,7 @@ empirical_fdrs <- function(z, znull, thresholds) {
 #' @keywords internal
 tail_counts <- function(z, znull) {
   apply(znull, 2, function(znulli) {
-    as.numeric(length(znulli) - cumsum(table(cut(znulli**2, c(0, z**2)))))        
+    as.numeric(length(znulli) - cumsum(table(cut(znulli**2, c(0, z**2)))))
   })
 }
 

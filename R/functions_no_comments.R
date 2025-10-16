@@ -1,47 +1,47 @@
 
 
 
-suppressWarnings({
-  library(dplyr)
-  library(tidyr)
-  library(tidyverse)
-  library(ggalluvial)
-  library(ggrepel)
-  library(MASS)
-  library(caret)
-
-  library(Seurat)
-  library(ggplot2)
-  library(glue)
-
-  library(stevemisc)
-  library(stevedata)
-  library(lme4)
-  library(broom.mixed)
-
-
-  library(doParallel)
-  library(pbapply)
-
-  library(variancePartition)
-  library(pheatmap)
-  library(Seurat)
-
-  library(data.table)
-  library(presto)
-  library(edgeR)
-  library(dplyr)
-  library(MatrixEQTL)
-  library(harmony)
-
-  library(MASS)
-  library(foreach)
-  library(doParallel)
-
-  library(MOFA2)
-  library(shapviz)
-  library(xgboost)
-})
+# suppressWarnings({
+#   library(dplyr)
+#   library(tidyr)
+#   library(tidyverse)
+#   library(ggalluvial)
+#   library(ggrepel)
+#   library(MASS)
+#   library(caret)
+#
+#   library(Seurat)
+#   library(ggplot2)
+#   library(glue)
+#
+#   library(stevemisc)
+#   library(stevedata)
+#   library(lme4)
+#   library(broom.mixed)
+#
+#
+#   library(doParallel)
+#   library(pbapply)
+#
+#   library(variancePartition)
+#   library(pheatmap)
+#   library(Seurat)
+#
+#   library(data.table)
+#   library(presto)
+#   library(edgeR)
+#   library(dplyr)
+#   library(MatrixEQTL)
+#   library(harmony)
+#
+#   library(MASS)
+#   library(foreach)
+#   library(doParallel)
+#
+#   library(MOFA2)
+#   library(shapviz)
+#   library(xgboost)
+# })
 
 
 
@@ -73,11 +73,11 @@ get_density <- function(x, y, ...) {
 #' @keywords internal
 GLM_interact <- function(dataset, cluster, contrast1, contrast2, random_effects = NULL, fixed_effects = NULL,
                          verbose = FALSE, save_models = FALSE, save_model_dir = NULL, save_name = NULL) {
-  library(tidyverse)
-  library(stevemisc)
-  library(stevedata)
-  library(lme4)
-  library(broom.mixed)
+  # library(tidyverse)
+  # library(stevemisc)
+  # library(stevedata)
+  # library(lme4)
+  # library(broom.mixed)
 
 
 
@@ -669,9 +669,7 @@ NAM_NMF_GP = function(seurat_object=NULL,
 
 
 
-  #' Title (optional, can be brief)
-  #' @noRd
-  #' @keywords internal
+
   scaling = function (x, range = NULL)
   {
     (x - min(c(x, range), na.rm = TRUE))/(max(c(x, range), na.rm = TRUE) -
@@ -770,9 +768,9 @@ NAM_NMF_GP = function(seurat_object=NULL,
   frml = as.formula(frml)
 
   prior <- list(
-    alpha = lgpr::normal(mu = 0, sigma = 1),
-    ell = lgpr::igam(shape = 5, scale = 5),
-    wrp = lgpr::log_normal(0, 1)
+ #   alpha = lgpr::normal(mu = 0, sigma = 1),
+ #   ell = lgpr::igam(shape = 5, scale = 5),
+ #   wrp = lgpr::log_normal(0, 1)
 
 
 
@@ -881,11 +879,9 @@ NAM_NMF_GP = function(seurat_object=NULL,
                    },
                    ")", covs_frml, " + zs(", samplem_key, ") + zs(", batch_col, ")"))
 
-    #' Title (optional, can be brief)
-    #' @noRd
-    #' @keywords internal
+
     .perm_stats = function(i){
-      require(lgpr)
+    #  require(lgpr)
 
       set.seed(seed+i)
       fit_full <- lgp(frml,
@@ -1007,7 +1003,7 @@ NAM_NMF_GP = function(seurat_object=NULL,
 
     return(fdr)
   }
-  
+
   #' Title (optional, can be brief)
   #' @noRd
   #' @keywords internal
@@ -1231,9 +1227,9 @@ apply_countmodel_to_column <- function(column_data) {
 compute_lisi_parallel <- function(
     X, meta_data, label_colnames, perplexity = 30, nn_eps = 0, n_thread = 1
 ) {
-  library(lisi)
-  library(parallel)
-  library(RANN)
+  # library(lisi)
+  # library(parallel)
+  # library(RANN)
   N <- nrow(meta_data)
   dknn <- nn2(X, k = perplexity * 3, eps = nn_eps)
   lisi_df <- data.frame(matrix(NA, N, length(label_colnames)))
