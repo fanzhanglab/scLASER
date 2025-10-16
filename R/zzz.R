@@ -10,13 +10,14 @@
   if (isTRUE(getOption("sclaser.silent_startup"))) return(invisible())
 
   ascii_logo <- paste0(
-    "   ____   _____    _                _____  \n",
-    "  / ___| / ____|  / \\    ___  ___  / ____| \n",
-    "  \\___ \\| (___   / _ \\  / __|/ _ \\| |      \n",
-    "   ___) |\\___ \\ / ___ \\ \\__ \\  __/| |___   \n",
-    "  |____/ |____//_/   \\_\\|___/\\___| \\____|  \n",
-    "      scLASER — single-cell longitudinal pipeline\n"
+    "         _      _   ___ ___ ___ \n",
+    "  ___ __| |    /_\\ / __| __| _ \\\n",
+    " (_-</ _| |__ / _ \\\\__ \\ _||   /\n",
+    " /__/\\__|____/_/ \\_\\___/___|_|_\\\n",
+    "                                 \n",
+    "     scLASER — single-cell local association\n"
   )
+
 
   authors_str <- tryCatch({
     ar <- utils::packageDescription(pkgname, fields = "Authors@R")
