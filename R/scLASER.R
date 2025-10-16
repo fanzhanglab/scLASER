@@ -1,6 +1,20 @@
 setClassUnion("matrixOrNULL", c("matrix", "NULL"))
 setClassUnion("dfOrNULL",     c("data.frame", "NULL"))
 
+#' Title
+#'
+#' @slot metadata data.frame.
+#' @slot pcs matrixOrNULL.
+#' @slot masc dfOrNULL.
+#' @slot umap dfOrNULL.
+#' @slot harmony matrixOrNULL.
+#' @slot nam_pcs matrixOrNULL.
+#' @slot pipeline_output dfOrNULL.
+#'
+#' @return
+#' @export
+#'
+#' @examples
 setClass(
   "scLASER",
   slots = list(
@@ -10,7 +24,7 @@ setClass(
     umap            = "dfOrNULL",
     harmony         = "matrixOrNULL",
     nam_pcs         = "matrixOrNULL",
-    pipeline_output = "dfOrNULL"       # <- new slot to store the result table
+    pipeline_output = "dfOrNULL"
   ),
   prototype = list(
     metadata        = data.frame(),
@@ -22,6 +36,7 @@ setClass(
     pipeline_output = NULL
   )
 )
+
 
 scLASER <- function(metadata = data.frame(),
                     pcs = NULL,
