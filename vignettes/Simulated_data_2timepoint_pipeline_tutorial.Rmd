@@ -1,11 +1,18 @@
 ---
 title: "Longitudinal pipeline 2 time point tutorial"
 author: "fanzhang labs"
-date: "2025-10-09"
-output: html_document
+date: '2025-10-09'
+output:
+  html_notebook: default
+  html_document: default
 ---
 
-  
+
+```{r}
+library(scLASER)
+
+```
+
 
 ```{r}
 dummy_data = generate_dummy_data_time(
@@ -67,14 +74,14 @@ pcs_matrix <- generate_pseudo_pcs_time(
 
   seed = 1234
 )
-
+head(pcs_matrix)
 ```
 
 
 
 ```{r}
 obj = scLASER(metadata = dummy_data, pcs = pcs_matrix)
-obj
+
 ```
 
 
@@ -87,7 +94,7 @@ obj
 
 ```{r}
 obj = compute_umap(
-  obj,        # the pseudo-PC matrix generated earlier
+  obj,        
   n_neighbors = 30,
   metric = "cosine",
   min_dist = 0.01

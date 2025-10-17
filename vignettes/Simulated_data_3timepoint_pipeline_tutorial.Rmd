@@ -13,6 +13,9 @@ Any data can be used for the longitudinal pipeline, but for this example, we wil
 
 
 
+```{r}
+library(scLASER)
+```
 
 
 
