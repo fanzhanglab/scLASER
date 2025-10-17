@@ -1,8 +1,18 @@
 setClassUnion("matrixOrNULL", c("matrix", "NULL"))
 setClassUnion("dfOrNULL",     c("data.frame", "NULL"))
 
-#' Title
-#' @export
+#' scLASER S4 class
+#'
+#' @slot metadata data.frame
+#' @slot pcs matrix or NULL
+#' @slot masc data.frame or NULL
+#' @slot umap data.frame or NULL
+#' @slot harmony matrix or NULL
+#' @slot nam_pcs matrix or NULL
+#' @slot pipeline_output data.frame or NULL
+#'
+#' @exportClass scLASER
+#' @import methods
 setClass(
   "scLASER",
   slots = list(
@@ -25,7 +35,8 @@ setClass(
   )
 )
 
-
+#' Create a scLASER object
+#' @export
 scLASER <- function(metadata = data.frame(),
                     pcs = NULL,
                     masc = NULL,
@@ -33,12 +44,12 @@ scLASER <- function(metadata = data.frame(),
                     harmony = NULL,
                     nam_pcs = NULL,
                     pipeline_output = NULL) {
-  new("scLASER",
-      metadata        = metadata,
-      pcs             = pcs,
-      masc            = masc,
-      umap            = umap,
-      harmony         = harmony,
-      nam_pcs         = nam_pcs,
-      pipeline_output = pipeline_output)
+  methods::new("scLASER",
+               metadata        = metadata,
+               pcs             = pcs,
+               masc            = masc,
+               umap            = umap,
+               harmony         = harmony,
+               nam_pcs         = nam_pcs,
+               pipeline_output = pipeline_output)
 }
