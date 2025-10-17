@@ -2,19 +2,7 @@ setClassUnion("matrixOrNULL", c("matrix", "NULL"))
 setClassUnion("dfOrNULL",     c("data.frame", "NULL"))
 
 #' Title
-#'
-#' @slot metadata data.frame.
-#' @slot pcs matrixOrNULL.
-#' @slot masc dfOrNULL.
-#' @slot umap dfOrNULL.
-#' @slot harmony matrixOrNULL.
-#' @slot nam_pcs matrixOrNULL.
-#' @slot pipeline_output dfOrNULL.
-#'
-#' @return
 #' @export
-#'
-#' @examples
 setClass(
   "scLASER",
   slots = list(
