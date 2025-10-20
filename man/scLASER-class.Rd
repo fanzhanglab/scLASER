@@ -3,7 +3,25 @@
 \docType{class}
 \name{scLASER-class}
 \alias{scLASER-class}
-\title{Title}
+\title{scLASER S4 class}
 \description{
-Title
+scLASER S4 class
 }
+\section{Slots}{
+
+\describe{
+\item{\code{metadata}}{data.frame}
+
+\item{\code{pcs}}{matrix or NULL}
+
+\item{\code{masc}}{data.frame or NULL}
+
+\item{\code{umap}}{data.frame or NULL}
+
+\item{\code{harmony}}{matrix or NULL}
+
+\item{\code{nam_pcs}}{matrix or NULL}
+
+\item{\code{pipeline_output}}{data.frame or NULL}
+}}
+
