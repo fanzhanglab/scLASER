@@ -12,10 +12,11 @@ output: html_document
 Any data can be used for the longitudinal pipeline, but for this example, we will simulate a longitudinal dataset
 
 
-
 ```{r}
 library(scLASER)
 ```
+
+
 
 
 
@@ -97,7 +98,7 @@ head(pcs)
 ```{r}
 
 obj = scLASER(metadata = dummy_data, pcs = pcs)
-obj
+
 ```
 
 
