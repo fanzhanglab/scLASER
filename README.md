@@ -6,7 +6,9 @@
 
 **scLASER** 
 
-![scLASER logo](scLASER_hex_cropped.png)
+<img src="scLASER_hex_cropped.png" align="right" width="200" alt="scLASER logo"/>
+
+
 
 is an R package for modeling, simulating, and visualizing single-cell longitudinal datasets.
 
