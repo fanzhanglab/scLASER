@@ -1,11 +1,55 @@
 Package: scLASER
-Title: What the Package Does (One Line, Title Case)
+Title: Single-Cell Longitudinal Analysis, Simulation, and Visualization
 Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+    person(given = "Juan", family = "Vargas", role = c("aut","cre"),
+           email = "juan.vargas@cuanschutz.edu")  # <-- replace with real ORCID or remove
+)
+Description: Tools for modeling, simulating, and visualizing single-cell longitudinal datasets,
+    including mixed-effects modeling with time as continuous/categorical/quadratic and automated model selection.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+LazyData: true
+Depends:
+    R (>= 4.1.0)
+Imports:
+    methods,
+    stats,
+    utils,
+    Matrix,
+    nlme,
+    lme4,
+    dplyr,
+    ggplot2
+Suggests:
+    ggrepel,
+    glue,
+    pbapply,
+    tidyr,
+    purrr,
+    caret,
+    xgboost,
+    uwot,
+    variancePartition,
+    edgeR,
+    Seurat,
+    RSpectra,
+    harmony,
+    MOFA2,
+    MatrixEQTL,
+    broom.mixed,
+    foreach,
+    doParallel,
+    pheatmap,
+    presto,
+    moments,
+    stevedata,
+    stevemisc,
+    shapviz,
+    rmarkdown,
+    knitr,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+URL: https://github.com/fanzhanglab/scLASER
+BugReports: https://github.com/fanzhanglab/scLASER/issues
