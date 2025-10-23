@@ -15,7 +15,7 @@
     " (_-</ _| |__ / _ \\\\__ \\ _||   /\n",
     " /__/\\__|____/_/ \\_\\___/___|_|_\\\n",
     "                                 \n",
-    "     scLASER — single-cell longitudinal pipeline\n"
+    "     scLASER  single-cell longitudinal pipeline\n"
   )
 
 
