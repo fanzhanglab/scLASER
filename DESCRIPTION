@@ -1,10 +1,13 @@
 Package: scLASER
 Title: Single-Cell Longitudinal Analysis, Simulation, and Visualization
 Version: 0.0.0.9000
-Authors@R: c(
-    person(given = "Juan", family = "Vargas", role = c("aut","cre"),
-           email = "juan.vargas@cuanschutz.edu")  # <-- replace with real ORCID or remove
-)
+Authors@R: 
+    c(
+      person(given = "Juan", family = "Vargas", role = c("aut", "cre"),
+             email = "your_email@cuanschutz.edu"),
+      person(given = "Fan",  family = "Zhang",  role = "aut",
+             email = "fanzhanglab@gmail.com")
+    )
 Description: Tools for modeling, simulating, and visualizing single-cell longitudinal datasets,
     including mixed-effects modeling with time as continuous/categorical/quadratic and automated model selection.
 License: MIT + file LICENSE
@@ -50,6 +53,5 @@ Suggests:
     knitr,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-Config/testthat/edition: 3
 URL: https://github.com/fanzhanglab/scLASER
 BugReports: https://github.com/fanzhanglab/scLASER/issues
