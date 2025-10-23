@@ -35,6 +35,13 @@ devtools::install_github("fanzhanglab/scLASER")
 ```
 <br/>
 
+## Tutorials
+
+
+- [Simulated data (3 timepoints) tutorial](vignettes/Simulated_data_3timepoint_pipeline_tutorial.html)
+
+
+<br/>
 
 ## Citations
 
