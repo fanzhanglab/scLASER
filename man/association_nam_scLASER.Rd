@@ -27,13 +27,13 @@ association_nam_scLASER(
 }
 \arguments{
 \item{test_var}{Character. Name of the numeric sample-level variable to test
-(must be a column of \code{metadata} or \code{seurat_object@meta.data} after aggregation).}
+(must be a column of `metadata` or `seurat_object@meta.data` after aggregation).}
 
 \item{samplem_key}{Character. Name of the sample identifier column used to map
-cells to samples (present in cell-level \code{meta.data}) and to index \code{metadata}.}
+cells to samples (present in cell-level `meta.data`) and to index `metadata`.}
 
-\item{graph_use}{Character. Name of the graph in \code{seurat_object@graphs} to use
-(default \code{'RNA_snn'}). If \code{NULL}, the first available graph is used.}
+\item{graph_use}{Character. Name of the graph in `seurat_object@graphs` to use
+(default `'RNA_snn'`). If `NULL`, the first available graph is used.}
 
 \item{batches}{Optional character vector of sample-level batch columns used only
 for conditional permutation strata and batch-kurtosis QC.}
@@ -41,60 +41,60 @@ for conditional permutation strata and batch-kurtosis QC.}
 \item{covs}{Optional character vector of sample-level covariate columns to residualize out
 prior to association testing.}
 
-\item{nsteps}{Integer or \code{NULL}. Number of graph diffusion steps to form NAM.
-If \code{NULL}, an adaptive stopping rule based on median kurtosis is used.}
+\item{nsteps}{Integer or `NULL`. Number of graph diffusion steps to form NAM.
+If `NULL`, an adaptive stopping rule based on median kurtosis is used.}
 
-\item{verbose}{Logical. Print progress messages. Default \code{TRUE}.}
+\item{verbose}{Logical. Print progress messages. Default `TRUE`.}
 
-\item{assay}{Character or \code{NULL}. Assay name for the created reduction. Default \code{NULL}.}
+\item{assay}{Character or `NULL`. Assay name for the created reduction. Default `NULL`.}
 
-\item{key}{Character. Reduction key prefix for the created reduction. Default \code{'NAMPC_'}.}
+\item{key}{Character. Reduction key prefix for the created reduction. Default `'NAMPC_'`.}
 
-\item{maxnsteps}{Integer. Maximum diffusion steps when using adaptive stopping. Default \code{15L}.}
+\item{maxnsteps}{Integer. Maximum diffusion steps when using adaptive stopping. Default `15L`.}
 
 \item{max_frac_pcs}{Numeric in (0,1]. Maximum fraction of samples to use as the
-upper bound on SVD PCs (also bounded by sample size). Default \code{0.15}.}
+upper bound on SVD PCs (also bounded by sample size). Default `0.15`.}
 
 \item{ks}{Optional integer vector of candidate numbers of NAM PCs to consider
-in the min-\emph{p} procedure. If \code{NULL}, a data-driven sequence is used.}
+in the min-\emph{p} procedure. If `NULL`, a data-driven sequence is used.}
 
-\item{Nnull}{Integer. Number of conditional permutations for the global test. Default \code{1000}.}
+\item{Nnull}{Integer. Number of conditional permutations for the global test. Default `1000`.}
 
-\item{force_permute_all}{Logical. If \code{TRUE}, ignore \code{batches} and permute across all samples. Default \code{FALSE}.}
+\item{force_permute_all}{Logical. If `TRUE`, ignore `batches` and permute across all samples. Default `FALSE`.}
 
-\item{local_test}{Logical. If \code{TRUE}, compute neighborhood-level empirical FDR curves and thresholds. Default \code{TRUE}.}
+\item{local_test}{Logical. If `TRUE`, compute neighborhood-level empirical FDR curves and thresholds. Default `TRUE`.}
 
-\item{seed}{Integer or \code{NULL}. RNG seed used for permutations. Default \code{1234}.}
+\item{seed}{Integer or `NULL`. RNG seed used for permutations. Default `1234`.}
 
-\item{return_nam}{Logical. If \code{TRUE}, store NAM embeddings/loadings/singular values/variance explained
-in the returned reduction. Default \code{TRUE}.}
+\item{return_nam}{Logical. If `TRUE`, store NAM embeddings/loadings/singular values/variance explained
+in the returned reduction. Default `TRUE`.}
 
-\item{seurat_object}{A \code{Seurat} object. If provided, it must contain at least one
-cell-cell graph in \code{object@graphs} (e.g. after \code{FindNeighbors()}).
-If \code{NULL}, you must provide both \code{metadata} and \code{pcs}.}
+\item{seurat_object}{A `Seurat` object. If provided, it must contain at least one
+cell-cell graph in `object@graphs` (e.g. after `FindNeighbors()`).
+If `NULL`, you must provide both `metadata` and `pcs`.}
 
 \item{metadata}{A data.frame of sample-level metadata (rows = samples, columns = covariates).
-Required only when \code{seurat_object} is \code{NULL}. Must include \code{test_var}, any \code{batches}/\code{covs},
-and the \code{samplem_key} column that links samples to cells.}
+Required only when `seurat_object` is `NULL`. Must include `test_var`, any `batches`/`covs`,
+and the `samplem_key` column that links samples to cells.}
 
 \item{pcs}{A numeric matrix of precomputed embeddings (rows = samples, cols = PCs)
-used to build a graph when \code{seurat_object} is \code{NULL}. Ignored otherwise.}
+used to build a graph when `seurat_object` is `NULL`. Ignored otherwise.}
 }
 \value{
-A \code{Seurat} object where:
+A `Seurat` object where:
 \itemize{
-\item \code{reductions$cna} contains:
-\itemize{
-\item \code{embeddings}: neighborhood-by-PC NAM embeddings (nbhd x PC)
-\item \code{loadings}: sample-by-PC NAM loadings
-\item \code{stdev}: singular values
-\item \code{misc}: a list with fields: \code{p} (global p-value), \code{nullminps}, \code{k} (selected PCs),
-\code{ncorrs} (per-cell neighborhood correlations), \code{fdrs} (data.frame of FDR vs threshold),
-\code{fdr_5p_t}, \code{fdr_10p_t}, \code{yhat}, \code{ycond}, \code{ks}, \code{beta}, \code{r2},
-\code{r2_perpc}, \code{nullr2_mean}, \code{nullr2_std}, projection matrix \code{M} and rank \code{r}.
-}
-\item \code{meta.data$cna_ncorrs}: per-cell (neighborhood) correlation score.
-\item \verb{meta.data$cna_ncorrs_fdr\{05,10,20,30,40,50\}}: thresholded versions at target FDRs.
+  \item `reductions$cna` contains:
+    \itemize{
+      \item `embeddings`: neighborhood-by-PC NAM embeddings (nbhd x PC)
+      \item `loadings`: sample-by-PC NAM loadings
+      \item `stdev`: singular values
+      \item `misc`: a list with fields: `p` (global p-value), `nullminps`, `k` (selected PCs),
+        `ncorrs` (per-cell neighborhood correlations), `fdrs` (data.frame of FDR vs threshold),
+        `fdr_5p_t`, `fdr_10p_t`, `yhat`, `ycond`, `ks`, `beta`, `r2`,
+        `r2_perpc`, `nullr2_mean`, `nullr2_std`, projection matrix `M` and rank `r`.
+    }
+  \item `meta.data$cna_ncorrs`: per-cell (neighborhood) correlation score.
+  \item `meta.data$cna_ncorrs_fdr{05,10,20,30,40,50}`: thresholded versions at target FDRs.
 }
 }
 \description{
@@ -102,29 +102,30 @@ Computes Neighborhood Aggregation Matrix (NAM) embeddings from a Seurat graph,
 residualizes them with respect to optional covariates, performs an SVD to obtain
 NAM PCs, and tests association between the NAM subspace and a numeric
 sample-level variable via a min-\emph{p} procedure with conditional permutations.
-Optionally writes the results back into the Seurat object as a reduction (\code{cna})
+Optionally writes the results back into the Seurat object as a reduction (`cna`)
 and per-cell neighborhood correlations (with FDR-thresholded variants).
 }
 \details{
 You can either (a) pass a Seurat object that already has a nearest-neighbor graph
-(e.g. created by \code{Seurat::FindNeighbors()}), or (b) pass \code{metadata} and precomputed
-low-dimensional coordinates (\code{pcs}), in which case a minimal Seurat object and graph
+(e.g. created by `Seurat::FindNeighbors()`), or (b) pass `metadata` and precomputed
+low-dimensional coordinates (`pcs`), in which case a minimal Seurat object and graph
 are built internally.
 
-\strong{Pipeline summary:}\
+
+**Pipeline summary:**\
 (1) Build NAM by diffusing sample indicators over the cell graph;\
 (2) Batch-kurtosis QC to drop unstable neighborhoods; \
 (3) Residualize NAM against covariates; \
 (4) SVD to obtain NAM PCs; \
-(5) Choose \eqn{k} via a min-\emph{p} scan over candidate \code{ks}; \
-(6) Obtain a global p-value using conditional permutations (stratified by \code{batches} if provided); \
+(5) Choose \eqn{k} via a min-\emph{p} scan over candidate `ks`; \
+(6) Obtain a global p-value using conditional permutations (stratified by `batches` if provided); \
 (7) Optionally compute neighborhood-level empirical FDR thresholds.
 }
 \section{Requirements}{
 
 Relies on \pkg{Seurat}, \pkg{Matrix}, \pkg{RSpectra}, \pkg{moments}, \pkg{dplyr},
 \pkg{tibble}, \pkg{purrr}, and \pkg{glue}. Ensure a neighbor graph exists if supplying
-a \code{Seurat} object (see \code{Seurat::FindNeighbors()}).
+a `Seurat` object (see `Seurat::FindNeighbors()`).
 }
 
 \examples{
@@ -155,5 +156,5 @@ obj2 <- association_nam(
 }
 \seealso{
 \code{\link[Seurat]{FindNeighbors}}, \code{\link[Seurat]{CreateSeuratObject}},
-\code{\link[Seurat]{CreateDimReducObject}}
+  \code{\link[Seurat]{CreateDimReducObject}}
 }

@@ -22,11 +22,11 @@ longAnalyses_plusModelSelection(object, ...)
 \item{na_action}{One of "omit" (default) or "fail" for handling NA rows}
 }
 \value{
-The modified scLASER object with \verb{@pipeline_output} set to a data.frame.
+The modified scLASER object with `@pipeline_output` set to a data.frame.
 }
 \description{
-Pulls metadata and @nam_pcs from \code{object}, fits three mixed models per PC
+Pulls metadata and @nam_pcs from `object`, fits three mixed models per PC
 (continuous time, categorical time, quadratic time), selects best by AIC,
 computes an LRT vs the matched null (no interaction), and saves a tidy table
-into \code{object@pipeline_output}.
+into `object@pipeline_output`.
 }

@@ -12,7 +12,6 @@ Description: Tools for modeling, simulating, and visualizing single-cell longitu
     including mixed-effects modeling with time as continuous/categorical/quadratic and automated model selection.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -23,35 +22,40 @@ Imports:
     nlme,
     lme4,
     dplyr,
-    ggplot2
-Suggests:
-    ggrepel,
-    glue,
-    pbapply,
-    tidyr,
-    purrr,
-    caret,
-    xgboost,
-    uwot,
-    variancePartition,
-    edgeR,
-    Seurat,
-    RSpectra,
-    harmony,
+    ggplot2,
+    MASS,
     MOFA2,
     MatrixEQTL,
+    RSpectra,
+    Seurat,
     broom.mixed,
-    foreach,
+    caret,
+    data.table,
     doParallel,
+    edgeR,
+    foreach,
+    ggrepel,
+    glue,
+    harmony,
+    moments,
+    pbapply,
     pheatmap,
     presto,
-    moments,
+    purrr,
+    shapviz,
     stevedata,
     stevemisc,
-    shapviz,
+    tidyr,
+    uwot,
+    variancePartition,
+    xgboost
+Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0)
+Remotes:
+    immunogenomics/presto
 VignetteBuilder: knitr
 URL: https://github.com/fanzhanglab/scLASER
 BugReports: https://github.com/fanzhanglab/scLASER/issues
+RoxygenNote: 7.2.3
