@@ -12,6 +12,8 @@
 
 is an R package for modeling, simulating, and visualizing single-cell longitudinal datasets.
 
+<br/>
+
 ## Installation
 
 To install the latest development version directly from GitHub:
