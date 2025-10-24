@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use scLASER, please cite this work using the following metadata."
+title: "scLASER: Single-Cell Longitudinal Analysis, Simulation, and Modeling using Neighbor Abundance Meta-PCs"
+type: software
+authors:
+  - given-names: Lauren
+    family-names: Vanderlinden
+    email: lauren.vanderlinden@cuanschutz.edu
+    affiliation: "University of Colorado Anschutz Medical Campus"
+  - given-names: Juan
+    family-names: Vargas
+    email: juan.vargas@cuanschutz.edu
+    affiliation: "University of Colorado Anschutz Medical Campus"
+  - given-names: Fan
+    family-names: Zhang
+    email: fanzhanglab@gmail.com
+    affiliation: "University of Colorado Anschutz Medical Campus"
+
+repository-code: "https://github.com/fanzhanglab/scLASER"
+url: "https://github.com/fanzhanglab/scLASER"
+abstract: >
+  scLASER is an R package for modeling and simulating single-cell longitudinal datasets
+  using harmonized Neighbor Abundance Principal Components (NAM-PCs).
+  It supports mixed-effects modeling, dynamic association analysis, and simulation-based
+  power calculations for benchmarking longitudinal single-cell omics designs.
+
+keywords:
+  - single-cell
+  - longitudinal
+  - NAM-PC
+  - mixed-effects
+  - simulation
+  - power analysis
+  - bioinformatics
+  - R
+
+license: MIT
+version: 0.0.0.9000
+date-released: 2025-10-23
+preferred-citation:
+  type: software
+  title: "scLASER: Single-Cell Longitudinal Analysis, Simulation, and Modeling using Neighbor Abundance Meta-PCs"
+  authors:
+    - given-names: Lauren
+      family-names: Vanderlinden
+    - given-names: Juan
+      family-names: Vargas
+    - given-names: Fan
+      family-names: Zhang
+  year: 2025
+  url: "https://github.com/fanzhanglab/scLASER"
