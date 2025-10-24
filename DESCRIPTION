@@ -3,9 +3,11 @@ Title: Single-Cell Longitudinal Analysis, Simulation, and Visualization
 Version: 0.0.0.9000
 Authors@R: 
     c(
+      person(given = "Lauren", family = "Vanderlinden", role = "aut",
+             email = "lauren.vanderlinden@cuanschutz.edu"),
       person(given = "Juan", family = "Vargas", role = c("aut", "cre"),
-             email = "your_email@cuanschutz.edu"),
-      person(given = "Fan",  family = "Zhang",  role = "aut",
+             email = "juan.vargas@cuanschutz.edu"),
+      person(given = "Fan",  family = "Zhang", role = "aut",
              email = "fanzhanglab@gmail.com")
     )
 Description: Tools for modeling, simulating, and visualizing single-cell longitudinal datasets,
