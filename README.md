@@ -10,7 +10,7 @@
 
 
 
-is an R package for modeling, simulating, and visualizing single-cell longitudinal datasets.
+scLASER is an R package that provides a comprehensive framework for analyzing single-cell longitudinal data using neighbor abundance derived principal components (NAM-PCs). It integrates harmonization and mixed-effects modeling to capture dynamic associations between cellular composition, disease status throught time. The package also includes tools to simulate realistic longitudinal single-cell datasets and perform power calculations for study design, enabling users to benchmark analytical approaches and evaluate statistical robustness in complex temporal single-cell omics studies.
 
 <br/>
 
@@ -81,7 +81,10 @@ devtools::install_github("fanzhanglab/scLASER")
 
 ## Citations
 
-Authors
+**Authors:**  
+Lauren Vanderlinden (lauren.vanderlinden@cuanschutz.edu)  
+Juan Vargas (juan.vargas@cuanschutz.edu)  
+Fan Zhang (fanzhanglab@gmail.com)
 
 
 <br/>
