@@ -26,7 +26,6 @@ Imports:
     dplyr,
     ggplot2,
     MASS,
-    MOFA2,
     MatrixEQTL,
     RSpectra,
     Seurat,
@@ -34,29 +33,20 @@ Imports:
     caret,
     data.table,
     doParallel,
-    edgeR,
     foreach,
-    ggrepel,
     glue,
     harmony,
     moments,
     pbapply,
-    pheatmap,
-    presto,
     purrr,
-    shapviz,
     stevedata,
     stevemisc,
     tidyr,
-    uwot,
-    variancePartition,
-    xgboost
+    uwot
 Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0)
-Remotes:
-    immunogenomics/presto
 VignetteBuilder: knitr
 URL: https://github.com/fanzhanglab/scLASER
 BugReports: https://github.com/fanzhanglab/scLASER/issues

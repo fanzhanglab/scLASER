@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main, master]
 
-# 👇 Skip manual + vignettes during checks
 env:
   R_CMD_CHECK_ARGS: --as-cran --no-manual --no-build-vignettes
 

@@ -20,21 +20,13 @@
 #' @import doParallel
 #' @import foreach
 #' @import pbapply
-#' @import variancePartition
 #' @import ggplot2
-#' @import ggrepel
-#' @import pheatmap
 #' @import data.table
-#' @import presto
-#' @import edgeR
 #' @import MatrixEQTL
 #' @import harmony
 #' @import RSpectra
 #' @import moments
 #' @import nlme
 #' @import uwot
-#' @import MOFA2
-#' @import shapviz
-#' @import xgboost
 #' @import parallel
 NULL
