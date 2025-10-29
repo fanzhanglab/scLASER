@@ -37,33 +37,20 @@ devtools::install_github("fanzhanglab/scLASER")
 - nlme
 - lme4
 - dplyr
-- ggplot2
-- ggrepel
-- glue
 - pbapply
 - tidyr
 - purrr
 - caret
-- xgboost
 - uwot
-- variancePartition
-- edgeR
 - Seurat
-- RSpectra
 - harmony
-- MOFA2
-- MatrixEQTL
 - broom.mixed
 - foreach
 - doParallel
-- pheatmap
-- presto
 - moments
 - stevedata
 - stevemisc
 - shapviz
-- rmarkdown
-- knitr
 ```
 > **Note:** Only the core dependencies (`Matrix`, `nlme`, `lme4`, `dplyr`, `ggplot2`) are required for standard use.  
 > The remaining packages are suggested for optional analyses, visualization, or vignettes.
