@@ -48,8 +48,7 @@ devtools::install_github("fanzhanglab/scLASER")
 - doParallel
 - moments
 ```
-> **Note:** Only the core dependencies (`Matrix`, `nlme`, `lme4`, `dplyr`, `ggplot2`) are required for standard use.  
-> The remaining packages are suggested for optional analyses, visualization, or vignettes.
+
 
 <br/>
 
