@@ -81,7 +81,7 @@ generate_dummy_data <- function(
   subjects <- data.frame(
     subject_id = subject_id,
     sex   = sex_vec,
-    disease = disease_vec,
+    disease = disease_vec,           # canonical exposure storage
     age   = age_vec,
     bmi   = bmi_vec,
     batch = factor(batch_vec),
@@ -96,7 +96,15 @@ generate_dummy_data <- function(
   visits$sample_id <- paste0(visits$subject_id, "_V", visits$visit)
 
   meta <- merge(visits, subjects, by = "subject_id", sort = FALSE)
-  meta$interaction <- paste0(interaction_feature, ":", test_var)
+
+  # Make sure a column named `test_var` exists (even if test_var != "disease")
+  if (!identical(test_var, "disease")) {
+    meta[[test_var]] <- meta[["disease"]]
+  }
+
+  # Label and INTERACTION TERM (persist to output)
+  meta$interaction    <- paste0(interaction_feature, ":", test_var)
+  meta$interact_term  <- as.integer(meta[[interaction_feature]]) * as.integer(meta[[test_var]])
 
   # --- Default visit effects (length = time_points) ----
   if (is.null(visit_effects_progressor)) {
@@ -106,7 +114,7 @@ generate_dummy_data <- function(
       visit_effects_progressor <- ve
     } else if (interaction_type == "differential") {
       visit_effects_progressor <- rep(fc_interact, time_points)
-    } else { # "opposite": alternate +/-
+    } else { # "opposite": alternate +/- starting at V0
       ve <- rep(0, time_points)
       ve[seq(1, time_points, by = 2)] <- +fc_interact  # V0, V2, ...
       if (time_points >= 2) ve[seq(2, time_points, by = 2)] <- -fc_interact # V1, V3, ...
@@ -128,7 +136,6 @@ generate_dummy_data <- function(
   names(direction_by_cluster) <- interact_cell_types
 
   # --- Baseline counts per (sample, cell_type) ----
-  # Major types centered around n_cells; minor types around n_cells * relative_abundance
   one_sample_counts <- function() {
     major_counts <- round(runif(n_major_cell_types,
                                 min = n_cells * (1 - sd_celltypes),
@@ -158,7 +165,6 @@ generate_dummy_data <- function(
                        by = "sample_id", sort = FALSE)
 
   # --- Apply effects only to interacting cell types ----
-  # effect = direction * visit_effect (progressor vs control)
   is_interacting <- counts_long$cell_type %in% interact_cell_types
   eff_vec <- numeric(nrow(counts_long))
   if (any(is_interacting)) {
@@ -172,11 +178,9 @@ generate_dummy_data <- function(
     eff_vec[is_interacting] <- dir_ct * ve
   }
 
-  # adjusted counts (non-negative)
   counts_long$adj_count <- pmax(0L, round(counts_long$count * (1 + eff_vec)))
 
-  # --- Expand to per-cell rows and attach metadata ----
-  # Note: Simple & clear; for large sizes, this is big by design (single-cell rows)
+  # --- Expand to per-cell rows and attach metadata (INCLUDING interact_term) ----
   rep_each <- function(x, times) if (length(x) == 0) x else rep(x, times = times)
   expanded <- data.frame(
     sample_id = rep_each(counts_long$sample_id, counts_long$adj_count),
@@ -184,10 +188,10 @@ generate_dummy_data <- function(
     stringsAsFactors = FALSE
   )
 
-  # Merge metadata for each cell
-  dummy_data <- merge(expanded,
-                      meta[, c("sample_id","subject_id","visit","sex","disease","age","bmi","batch","interaction")],
-                      by = "sample_id", sort = FALSE)
+  # Merge metadata; keep interaction + interact_term
+  keep_cols <- c("sample_id","subject_id","visit","sex","disease","age","bmi","batch",
+                 "interaction","interact_term")
+  dummy_data <- merge(expanded, meta[, keep_cols], by = "sample_id", sort = FALSE)
 
   # Shuffle rows for realism
   if (nrow(dummy_data) > 1) {
@@ -197,4 +201,3 @@ generate_dummy_data <- function(
 
   dummy_data
 }
-
