@@ -13,8 +13,6 @@
 #' @import caret
 #' @import Seurat
 #' @import glue
-#' @import stevemisc
-#' @import stevedata
 #' @import lme4
 #' @import broom.mixed
 #' @import doParallel
@@ -22,9 +20,7 @@
 #' @import pbapply
 #' @import ggplot2
 #' @import data.table
-#' @import MatrixEQTL
 #' @import harmony
-#' @import RSpectra
 #' @import moments
 #' @import nlme
 #' @import uwot

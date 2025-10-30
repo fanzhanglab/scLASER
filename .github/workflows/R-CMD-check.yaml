@@ -8,11 +8,12 @@ on:
 
 env:
   R_CMD_CHECK_ARGS: --as-cran --no-manual --no-build-vignettes
+  _R_CHECK_FORCE_SUGGESTS_: false
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   R-CMD-check:
-    runs-on: ubuntu-latest
-    name: R CMD check on ${{ matrix.config.os }} (${{ matrix.config.r }})
+    runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -33,19 +34,11 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
-      - name: Install dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: |
-            any::rcmdcheck
-            github::immunogenomics/presto
+          extra-packages: any::rcmdcheck
           needs: check
 
-      - name: Check package
-        shell: Rscript {0}
-        run: |
-          rcmdcheck::rcmdcheck(
-            args = strsplit(Sys.getenv("R_CMD_CHECK_ARGS"), " +")[[1]],
-            error_on = "error",
-            check_dir = "check"
-          )
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
