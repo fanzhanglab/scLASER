@@ -54,8 +54,7 @@ devtools::install_github("fanzhanglab/scLASER")
 
 ## Tutorials
 
-- [Simulated data (3 timepoints) tutorial](vignettes/Simulated_data_3timepoint_pipeline_tutorial.nb.html)
-- [Simulated data (2 timepoints) tutorial](vignettes/Simulated_data_2timepoint_pipeline_tutorial.nb.html)
+- [Simulated data and pipeline tutorial](vignettes/Simulated_data_pipeline.nb.html)
 - [General data simulation overview](vignettes/Data_simulation.nb.html)
 
 

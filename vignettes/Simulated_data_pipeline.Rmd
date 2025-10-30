@@ -1,0 +1,315 @@
+---
+title: "scLASER Longitudinal Pipeline: 2 Time Points THEN 3 Time Points"
+author: |
+  fanzhang labs  
+  [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
+  [Lab GitHub - https://github.com/fanzhanglab](https://github.com/fanzhanglab)
+date: "`r format(Sys.Date())`"
+output:
+  rmarkdown::html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    code_folding: show
+    theme:
+      version: 5
+      bootswatch: flatly
+      primary: "#984EA3"
+      base_font: {google: "Inter"}
+      heading_font: {google: "Inter"}
+      code_font: {google: "Fira Code"}
+vignette: >
+  %\VignetteIndexEntry{scLASER Pipeline: 2TP then 3TP}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 7,
+  fig.height = 4.5
+)
+```
+
+
+
+
+
+```{r}
+library(scLASER)
+library(dplyr)
+```
+
+---
+
+# Part A — Pipeline with **2 Time Points** (V0, V1)
+
+## A1. Simulate 2TP data
+
+```{r}
+d2 <- generate_dummy_data(
+  n_cells = 800,
+  sd_celltypes = 0.15,
+  n_major_cell_types = 5,
+  n_minor_cell_types = 2,
+  relative_abundance = 0.25,
+  n_major_interact_celltypes = 2,
+  n_minor_interact_celltypes = 1,
+  n_individuals = 20,
+  n_batchs = 3,
+
+  interaction_feature = "visit",
+  time_points = 2,
+  test_var = "disease",
+  prop_disease = 0.5,
+
+  fc_interact = 0.20,
+  interaction_type = "specific",
+  seed = 2025,
+
+  # explicit visit effects for 2TP
+  visit_effects_progressor = c(0.2, -0.2),
+  visit_effects_control    = c(0.0, 0.0),
+
+  # direction for interacting clusters
+  direction_by_cluster = c(+1, -1, +1)
+)
+
+dplyr::glimpse(d2)
+```
+
+## A2. Generate pseudo-PCs (2TP)
+
+```{r}
+pcs2 <-  generate_pseudo_pcs_time(
+  d2,                      
+  n_pcs = 20,
+  cluster_pcs = 1:20,
+  disease_pcs = 0,
+  sex_pcs = 0,
+  age_pcs = 0,
+  bmi_pcs = 0,
+  batch_pcs = 0,
+  interaction_pcs = 0,
+  visit_pcs = 0,
+  subject_pcs = 0,
+
+  cluster_ratio = 0.8,
+  disease_ratio = 0,
+  sex_ratio = 0,
+  age_ratio = 0,
+  bmi_ratio = 0,
+  batch_ratio = 0,
+  interaction_ratio = 0,
+  visit_ratio = 0,
+  subject_ratio = 0,
+
+  scale_factor = 5,
+  cluster_col = "cell_type",
+  sex_col = "sex",
+  age_col = "age",
+  bmi_col = "bmi",
+  batch_col = "batch",
+  disease_col = "disease",
+  visit_col = "visit",
+   
+
+  seed = 1234
+)
+dim(pcs2)
+```
+
+## A3. Create object, visualize proportions (2TP)
+
+```{r}
+obj2 <- scLASER(metadata = d2, pcs = pcs2)
+
+# Proportion plots (auto-handles V0, V1)
+plot_celltype_proportions(obj2)
+
+```
+
+## A4. UMAP & Harmony (2TP)
+
+```{r}
+obj2 <- compute_umap(obj2, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
+
+obj2 <- run_harmony(
+  obj2,
+  batch_col = "sample_id",
+  theta = 2,
+  epsilon.cluster = -Inf,
+  epsilon.harmony = -Inf,
+  max.iter.cluster = 30,
+  max.iter.harmony = 10,
+  plot_convergence = FALSE
+)
+```
+
+## A5. Association & Longitudinal modeling (2TP)
+
+```{r}
+obj2 <- association_nam_scLASER(
+  object = obj2,
+  test_var = "test_var_cna",
+  samplem_key = "subject_id",
+  graph_use = "RNA_nn",
+  batches = "batch",
+  covs = c("age", "sex"),
+  Nnull = 1000,
+  local_test = TRUE,
+  seed = 1234
+)
+
+# Align names for longitudinal analysis
+rownames(obj2@nam_pcs) <- obj2@metadata$sample_id
+
+obj2 <- longAnalyses_plusModelSelection(
+  obj2,
+  disease_var = "disease",
+  subject_var = "subject_id",
+  sample_var  = "sample_id",
+  time_var    = "visit",
+  covariates  = c("age", "sex")
+)
+
+obj2@pipeline_output
+```
+
+---
+
+# Part B — Pipeline with **3 Time Points** (V0, V1, V2)
+
+## B1. Simulate 3TP data
+
+```{r}
+d3 <- generate_dummy_data(
+  n_cells = 800,
+  sd_celltypes = 0.15,
+  n_major_cell_types = 5,
+  n_minor_cell_types = 2,
+  relative_abundance = 0.25,
+  n_major_interact_celltypes = 2,
+  n_minor_interact_celltypes = 1,
+  n_individuals = 20,
+  n_batchs = 3,
+
+  interaction_feature = "visit",
+  time_points = 3,
+  test_var = "disease",
+  prop_disease = 0.5,
+
+  fc_interact = 0.20,
+  interaction_type = "specific",
+  seed = 2025,
+
+  # explicit visit effects for 3TP
+  visit_effects_progressor = c(0.2, -0.1, 0.1),
+  visit_effects_control    = c(0.0, 0.0, 0.0),
+
+  direction_by_cluster = c(+1, -1, +1)
+)
+
+dplyr::count(d3, visit)
+```
+
+## B2. Generate pseudo-PCs (3TP)
+
+```{r}
+pcs3 <- pcs_matrix <- generate_pseudo_pcs_time(
+  d3,                      
+  n_pcs = 20,
+  cluster_pcs = 1:20,
+  disease_pcs = 0,
+  sex_pcs = 0,
+  age_pcs = 0,
+  bmi_pcs = 0,
+  batch_pcs = 0,
+  interaction_pcs = 0,
+  visit_pcs = 0,
+  subject_pcs = 0,
+
+  cluster_ratio = 0.8,
+  disease_ratio = 0,
+  sex_ratio = 0,
+  age_ratio = 0,
+  bmi_ratio = 0,
+  batch_ratio = 0,
+  interaction_ratio = 0,
+  visit_ratio = 0,
+  subject_ratio = 0,
+
+  scale_factor = 5,
+  cluster_col = "cell_type",
+  sex_col = "sex",
+  age_col = "age",
+  bmi_col = "bmi",
+  batch_col = "batch",
+  disease_col = "disease",
+  visit_col = "visit",
+  seed = 1234
+)
+dim(pcs3)
+```
+
+## B3. Create object, visualize proportions (3TP)
+
+```{r}
+obj3 <- scLASER(metadata = d3, pcs = pcs3)
+
+plot_celltype_proportions(obj3)
+
+
+```
+
+## B4. UMAP & Harmony (3TP)
+
+```{r}
+obj3 <- compute_umap(obj3, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
+
+obj3 <- run_harmony(
+  obj3,
+  batch_col = "sample_id",
+  theta = 2,
+  epsilon.cluster = -Inf,
+  epsilon.harmony = -Inf,
+  max.iter.cluster = 30,
+  max.iter.harmony = 10,
+  plot_convergence = FALSE
+)
+```
+
+## B5. Association & Longitudinal modeling (3TP)
+
+```{r}
+obj3 <- association_nam_scLASER(
+  object = obj3,
+  test_var = "test_var_cna",
+  samplem_key = "subject_id",
+  graph_use = "RNA_nn",
+  batches = "batch",
+  covs = c("age", "sex"),
+  Nnull = 1000,
+  local_test = TRUE,
+  seed = 1234
+)
+
+rownames(obj3@nam_pcs) <- obj3@metadata$sample_id
+
+obj3 <- longAnalyses_plusModelSelection(
+  obj3,
+  disease_var = "disease",
+  subject_var = "subject_id",
+  sample_var  = "sample_id",
+  time_var    = "visit",
+  covariates  = c("age", "sex")
+)
+
+obj3@pipeline_output
+```
+
