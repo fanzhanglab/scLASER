@@ -42,7 +42,7 @@ Suggests:
     rmarkdown,
     knitr,
     testthat (>= 3.0.0)
-VignetteBuilder: knitr
+BuildVignettes: false
 URL: https://github.com/fanzhanglab/scLASER
 BugReports: https://github.com/fanzhanglab/scLASER/issues
 RoxygenNote: 7.2.3
