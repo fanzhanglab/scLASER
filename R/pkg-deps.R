@@ -12,7 +12,6 @@
 #' @import MASS
 #' @import caret
 #' @import Seurat
-#' @import glue
 #' @import lme4
 #' @import broom.mixed
 #' @import doParallel
