@@ -1,5 +1,5 @@
 ---
-title: "scLASER Longitudinal Pipeline: 2 Time Points THEN 3 Time Points"
+title: "scLASER Longitudinal Pipeline: 2 Time Points then 3 Time Points"
 author: |
   fanzhang labs  
   [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
@@ -44,6 +44,8 @@ knitr::opts_chunk$set(
 library(scLASER)
 library(dplyr)
 ```
+
+
 
 ---
 
@@ -153,6 +155,9 @@ obj2 <- run_harmony(
 
 ## A5. Association & Longitudinal modeling (2TP)
 
+The following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of disease and visit.
+
+
 ```{r}
 obj2 <- association_nam_scLASER(
   object = obj2,
@@ -165,6 +170,8 @@ obj2 <- association_nam_scLASER(
   local_test = TRUE,
   seed = 1234
 )
+
+# Output is a matrix
 
 # Align names for longitudinal analysis
 rownames(obj2@nam_pcs) <- obj2@metadata$sample_id
@@ -285,6 +292,8 @@ obj3 <- run_harmony(
 ```
 
 ## B5. Association & Longitudinal modeling (3TP)
+
+As same as the section A5 in this tutorial, the following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline used in this example. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of disease and visit.
 
 ```{r}
 obj3 <- association_nam_scLASER(
