@@ -9,7 +9,7 @@
 <img src="scLASER_hex_cropped.png" align="right" width="200" alt="scLASER logo"/>
 
 
-scLASER is an R package that provides a comprehensive framework for analyzing single-cell longitudinal data using neighbor abundance derived principal components (NAM-PCs). It integrates harmonization and mixed-effects modeling to capture dynamic associations between cellular composition, disease status throught time. The package also includes tools to simulate realistic longitudinal single-cell datasets and perform power calculations for study design, enabling users to benchmark analytical approaches and evaluate statistical robustness in complex temporal single-cell omics studies.
+Longitudinal single-cell studies enable tracking within-person dynamics over time, but lack robust methods for modeling temporal cell phenotype changes and estimating statistical power. Here we present scLASER, a unified framework that detects time-dependent cellular neighborhood dynamics and simulates realistic longitudinal datasets for power estimation. scLASER achieves superior sensitivity compared to frequency-based tests (97.5% vs 94.4%), with pronounced gains for rare cell types (96.7% vs 88.8%). In inflammatory bowel disease and COVID-19, scLASER revealed novel cellular dynamics: NOTCH3+ stromal neighborhoods with treatment dependent trajectories and orthogonal axes, including T cell activation, cytotoxicity, and interferon signaling, distinguishing disease progressors. scLASER enables rigorous longitudinal single-cell analysis and principled study design optimization.
 
 <br/>
 
