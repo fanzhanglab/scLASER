@@ -152,7 +152,7 @@ association_nam_scLASER <- function (object, test_var = NULL, samplem_key = NULL
   m <- as(t(emb), "dgCMatrix")
   colnames(m) <- rownames(emb)
   obj <- Seurat::CreateSeuratObject(
-    counts = m, ## Subset expression matrix to cells in metadata
+    counts = m,
     meta.data = meta,
     assay = 'RNA',
     names.field = 1
@@ -205,7 +205,7 @@ association_nam_scLASER <- function (object, test_var = NULL, samplem_key = NULL
   f <- stats::as.formula(as.character(glue::glue("~0+{data$samplem_key}")))
   s <- model.matrix(f, data$obs)
   colnames(s) <- gsub(as.character(glue::glue("^{data$samplem_key}(.*)")),
-                      "\\1", colnames(s))
+                      "\1", colnames(s))
   rownames(s) <- data$obs[[data$obs_key]]
   s <- s[, data$samplem[[data$samplem_key]]]
   diffuse_step <- function(data, s) {
@@ -233,12 +233,10 @@ association_nam_scLASER <- function (object, test_var = NULL, samplem_key = NULL
   rownames(snorm) <- data$samplem[[data$samplem_key]]
   colnames(snorm) <- data$obs[[data$obs_key]]
   NAM <- snorm
-  if (is.null(batches_vec) | length(unique(batches_vec)) ==
-      1) {
+  if (is.null(batches_vec) | length(unique(batches_vec)) == 1) {
     message("only one unique batch supplied to qc")
     keep <- rep(TRUE, ncol(NAM))
-  }
-  else {
+  } else {
     message("filtering based on batches kurtosis")
     .batch_kurtosis <- function(NAM, batches_vec) {
       purrr::imap(split(seq_len(length(batches_vec)), batches_vec),
@@ -253,8 +251,7 @@ association_nam_scLASER <- function (object, test_var = NULL, samplem_key = NULL
     keep <- which(kurtoses < threshold)
   }
   N <- nrow(NAM)
-  if (verbose)
-    message("Residualize NAM")
+  if (verbose) message("Residualize NAM")
   NAM_ <- scale(NAM, center = TRUE, scale = FALSE)
   ncols_C <- 0
   if (!is.null(covs_mat)) {
@@ -263,21 +260,17 @@ association_nam_scLASER <- function (object, test_var = NULL, samplem_key = NULL
   }
   if (is.null(covs_mat)) {
     M <- Matrix::Diagonal(n = N)
-  }
-  else {
-    M <- Matrix::Diagonal(n = N) - covs_mat %*% solve(t(covs_mat) %*%
-                                                        covs_mat, t(covs_mat))
+  } else {
+    M <- Matrix::Diagonal(n = N) - covs_mat %*% solve(t(covs_mat) %*% covs_mat, t(covs_mat))
   }
   NAM_ <- M %*% NAM_
   NAM_ <- scale(NAM_, center = FALSE, scale = TRUE)
-  if (verbose)
-    message("Decompose NAM")
+  if (verbose) message("Decompose NAM")
   npcs <- npcs
   npcs <- min(npcs, nrow(data$samplem) - 1)
   if (missing(npcs) | npcs > 0.5 * min(dim(NAM_))) {
     svd_res <- svd(NAM_)
-  }
-  else {
+  } else {
     svd_res <- RSpectra::svds(NAM_, k = npcs)
   }
   U_df <- svd_res$u[, seq_len(npcs)]
@@ -295,5 +288,11 @@ association_nam_scLASER <- function (object, test_var = NULL, samplem_key = NULL
   V_save <- nam_res[["NAM_nbhdXpc"]]
   colnames(V_save) <- paste0(key, seq_len(ncol(V_save)))
   object@nam_pcs <- V_save
+
+  # Optionally return NAM matrix in NAM_matrix slot
+  if (return_nam) {
+    object@NAM_matrix <- NAM
+  }
+
   return(object)
 }
