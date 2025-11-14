@@ -86,12 +86,25 @@ setMethod(
     rand_f <- stats::as.formula(sprintf("~ 1 | %s/%s", subject_var, sample_var))
     ctrl   <- nlme::lmeControl(opt = "optim", returnObject = TRUE, msMaxIter = 200)
 
+
+
+
+
     # small helper: safe lme fit
     fit_safe <- function(fml, data) {
-      tryCatch(
-        nlme::lme(fixed = fml, random = rand_f, data = data, method = "ML", control = ctrl),
-        error = function(e) NULL
-      )
+      tryCatch({
+        fit <- nlme::lme(
+          fixed   = fml,
+          random  = rand_f,
+          data    = data,
+          method  = "ML",
+          control = ctrl
+        )
+        ## IMPORTANT: make sure the stored call holds the *formula*,
+        ## not the symbol "fml"
+        fit$call$fixed <- fml
+        fit
+      }, error = function(e) NULL)
     }
 
     # optionally drop rows with NAs across needed columns for modeling
