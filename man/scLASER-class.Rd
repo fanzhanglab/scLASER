@@ -22,6 +22,8 @@ scLASER S4 class
 
 \item{\code{nam_pcs}}{matrix or NULL}
 
+\item{\code{NAM_matrix}}{matrix or NULL}
+
 \item{\code{pipeline_output}}{data.frame or NULL}
 }}
 
