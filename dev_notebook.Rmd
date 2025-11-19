@@ -1,0 +1,106 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+
+getwd()
+
+setwd("Downloads")
+```
+
+
+
+
+```{r}
+library(scLASER)
+```
+
+
+```{r}
+obj = readRDS("scLASER_obj-2.rds")
+```
+
+
+```{r}
+obj1 = scLASER(obj@metadata,obj@pcs)
+```
+
+
+
+```{r}
+obj1 <- run_harmony(
+  obj1,
+  batch_col = "sample_id",
+  theta = 2,
+  epsilon.cluster = -Inf,
+  epsilon.harmony = -Inf,
+  max.iter.cluster = 30,
+  max.iter.harmony = 10,
+  plot_convergence = FALSE
+)
+```
+
+
+
+```{r}
+
+
+
+
+obj1@metadata$disease = obj1@metadata$disease %>% as.numeric()
+obj1 <- association_nam_LV(
+  obj = obj1,
+  test_var = "disease",
+  samplem_key = "sample_id",
+  graph_use = "RNA_nn",
+  batches = "batch",
+  covs = c("age", "sex"),
+  Nnull = 1000,
+  local_test = TRUE,n_pcs = 20,
+  seed = 1234, return_nam = T, key = "NAM_"
+)
+
+
+```
+
+
+
+
+assosiation function long analysis
+
+
+
+```{r}
+
+# 2 time point, not selecting
+# function for association
+getLMM <- function(pc){
+  tmp <- forAnalysis
+  tmp$nam_PC <- tmp[,which(colnames(tmp) == pc)]
+
+  mod <- lme(fixed = nam_PC ~ disease*visit + age + sex, 
+             random = ~ 1 | subject_id/sample_id, 
+             data = tmp, method="ML")
+  null <- lme(fixed = nam_PC ~ disease + visit + age + sex, 
+             random = ~ 1 | subject_id/sample_id, 
+             data = tmp, method="ML")
+  
+  full_tTab <- summary(mod)$tTable
+  lrt <- anova(null, mod)
+  lrt_pval <- lrt$`p-value`[2]
+  want = data.frame(NAMscore = pc, coefficient = rownames(full_tTab), full_tTab, lrt_pval = lrt_pval)
+}
+
+
+#selecting
+
+
+
+
+
+
+```
+
