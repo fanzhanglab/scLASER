@@ -108,205 +108,461 @@
 #'
 #' @export
 
-association_nam_scLASER <- function (object, test_var = NULL, samplem_key = NULL, graph_use = "RNA_snn",
-            batches = NULL, covs = NULL, nsteps = NULL, verbose = TRUE,
-            assay = NULL, key = "NAMPC_", maxnsteps = 15L, max_frac_pcs = 0.15,
-            npcs = 20, ks = NULL, Nnull = 1000, force_permute_all = FALSE,
-            local_test = TRUE, seed = 1234, return_nam = TRUE)
-  {
-    stopifnot(inherits(object, "scLASER"))
-    if (is.null(object@metadata))
-      stop("@metadata is NULL in scLASER object.")
-    if (is.null(samplem_key) || !(samplem_key %in% names(object@metadata))) {
-      stop("Please provide a valid 'samplem_key' present in object@metadata.")
-    }
-    if (is.null(test_var))
-      stop("Please provide 'test_var' (numeric sample-level variable).")
-    meta <- object@metadata
-    if (!(test_var %in% names(meta))) {
-      if ("disease" %in% names(meta)) {
-        meta[[test_var]] <- suppressWarnings(as.numeric(as.character(meta[["disease"]])))
-      }
-      else {
-        stop(sprintf("Column '%s' not found in metadata and 'disease' not available to derive it.",
-                     test_var))
-      }
-    }
-    meta[[test_var]] <- suppressWarnings(as.numeric(meta[[test_var]]))
-    if (any(!is.finite(meta[[test_var]]))) {
-      stop(sprintf("Non-finite values found in '%s'. Make sure it's numeric.",
-                   test_var))
-    }
-    emb <- if (!is.null(object@harmony))
-      object@harmony
-    else object@pcs
-    if (is.null(emb))
-      stop("Both @harmony and @pcs are NULL; need embeddings to build graph.")
-    emb <- as.matrix(emb)
-    storage.mode(emb) <- "double"
-    meta[[samplem_key]] <- as.character(meta[[samplem_key]])
-    cell_ids <- make.unique(meta[[samplem_key]])
-    rownames(meta) <- cell_ids
-    rownames(emb) <- cell_ids
-    m <- as(t(emb), "dgCMatrix")
-    colnames(m) <- rownames(emb)
-    obj <- Seurat::CreateSeuratObject(counts = m, meta.data = meta,
-                                      assay = "RNA", names.field = 1)
-    harm_sd <- apply(emb, 2, stats::sd)
-    harm_sd[!is.finite(harm_sd)] <- 0
-    obj@reductions$harmony <- Seurat::CreateDimReducObject(embeddings = emb,
-                                                           stdev = as.numeric(harm_sd), assay = "RNA", key = Seurat::Key("HARMONY",
-                                                                                                                         quiet = TRUE))
-    obj <- Seurat::FindNeighbors(object = obj, reduction = "harmony",
-                                 dims = seq_len(min(20L, ncol(emb))), k.param = 30, nn.eps = 0,
-                                 verbose = verbose)
-    covs_keep <- test_var
-    if (!is.null(batches))
-      covs_keep <- c(covs_keep, batches)
-    if (!is.null(covs))
-      covs_keep <- c(covs_keep, covs)
-    if (length(names(obj@graphs)) == 0)
-      stop("Must precompute graph in Seurat with FindNeighbors()")
-    if (is.null(graph_use)) {
-      graph_use <- names(obj@graphs)[[1]]
-      message(glue::glue("Graph not specified. Using graph {graph_use}"))
-    }
-    else if (!graph_use %in% names(obj@graphs)) {
-      stop(glue::glue("Graph {graph_use} not in seurat object"))
-    }
-    covs_keep <- c(covs_keep, samplem_key)
-    samplem_df <- tibble::remove_rownames(unique(dplyr::select(obj@meta.data,
-                                                               dplyr::one_of(covs_keep))))
-    obs_df <- tibble::rownames_to_column(obj@meta.data, "CellID")
-    if (nrow(samplem_df) == nrow(obs_df)) {
-      stop("Sample-level metadata is same length as cell-level metadata. Please check samplem_vars.")
-    }
-    rcna_data <- list(samplem = samplem_df, obs = obs_df, connectivities = obj@graphs[[graph_use]],
-                      samplem_key = samplem_key, obs_key = "CellID",
-                      N = nrow(samplem_df))
-    data <- rcna_data
+association_nam_LV <- function(object = NULL,
+                               seurat_object = NULL,
+                               metadata = NULL,
+                               pcs = NULL,
+                               test_var = NULL,
+                               samplem_key = NULL,
+                               graph_use = 'RNA_snn',
+                               batches = NULL,
+                               covs = NULL,
+                               nsteps = NULL,
+                               verbose = TRUE,
+                               assay = NULL,
+                               key = 'NAMPC_',
+                               maxnsteps = 15L,
+                               max_frac_pcs = 0.15,   # kept for backward compatibility
+                               n_pcs = NULL,          # NEW: explicitly request number of PCs
+                               ks = NULL,
+                               Nnull = 1000,
+                               force_permute_all = FALSE,
+                               local_test = TRUE,
+                               seed = 1234,
+                               return_nam = TRUE) {
 
-    # ------------------------------------------------------------------
-    # Build sample-by-cell indicator matrix s in a safe, aligned way
-    # ------------------------------------------------------------------
-    sample_ids <- data$samplem[[data$samplem_key]]
-    obs_sample_ids <- data$obs[[data$samplem_key]]
+  ## ---- NEW: pull metadata/pcs from scLASER object if provided ----
+  if (!is.null(object)) {
+    metadata <- object@metadata
+    pcs      <- object@harmony
+  }
 
-    sample_factor <- factor(
-      obs_sample_ids,
-      levels = sample_ids
+  if (!is.null(seurat_object) && is.null(metadata) && is.null(pcs)) {
+    message("will use Seurat object following analysis...")
+  } else if (is.null(seurat_object) && !is.null(metadata) && !is.null(pcs)) {
+    # build a minimal Seurat object from metadata + precomputed PCs (stored as 'harmony' reduction)
+    meta <- metadata
+    rownames(meta) <- 1:nrow(meta)
+
+    m <- as(t(pcs), "dgTMatrix")
+    colnames(m) <- 1:ncol(m)
+
+    obj <- Seurat::CreateSeuratObject(
+      counts = m,
+      meta.data = meta,
+      assay = 'RNA',
+      names.field = 1
     )
 
-    s <- stats::model.matrix(~ 0 + sample_factor)
-    colnames(s) <- sample_ids
-    rownames(s) <- data$obs[[data$obs_key]]
-    # ------------------------------------------------------------------
+    harmony_embeddings_all <- pcs
+    rownames(harmony_embeddings_all) <- 1:nrow(harmony_embeddings_all)
 
-    diffuse_step <- function(data, s) {
-      a <- data$connectivities
-      degrees <- Matrix::colSums(a) + 1
-      s_norm <- s/degrees
-      res <- (a %*% s_norm) + s_norm
-      as.matrix(res)
+    obj@reductions$harmony <- Seurat::CreateDimReducObject(
+      embeddings = harmony_embeddings_all,
+      stdev = as.numeric(apply(harmony_embeddings_all, 2, stats::sd)),
+      assay = "RNA",
+      key = Seurat::Key("HARMONY", quiet = TRUE)
+    )
+
+    # Use requested number of PCs for neighbor graph if provided
+    dims_use <- 1:min(ifelse(is.null(n_pcs), 20L, as.integer(n_pcs)),
+                      ncol(harmony_embeddings_all))
+    obj <- obj %>%
+      Seurat::FindNeighbors(verbose = TRUE, reduction = 'harmony',
+                            dims = dims_use, k.param = 30, nn.eps = 0)
+
+    seurat_object <- obj
+  } else if ((is.null(seurat_object) && is.null(metadata) && !is.null(pcs)) ||
+             (is.null(seurat_object) && !is.null(metadata) && is.null(pcs))) {
+    stop('Must provide both metadata and precomputed PCs')
+  }
+
+  ## (1) format data
+  covs_keep <- test_var
+  if (!is.null(batches)) covs_keep <- c(covs_keep, batches)
+  if (!is.null(covs)) covs_keep <- c(covs_keep, covs)
+
+  if (length(names(seurat_object@graphs)) == 0) {
+    stop('Must precompute graph in Seurat with FindNeighbors()')
+  }
+  if (is.null(graph_use)) {
+    graph_use <- names(seurat_object@graphs)[[1]]
+    message(glue::glue('Graph not specified. Using graph {graph_use}'))
+  } else {
+    if (!graph_use %in% names(seurat_object@graphs)) {
+      stop(glue::glue('Graph {graph_use} not in seurat object'))
     }
-    suffix <- ""
-    if (is.null(batches)) {
-      batches_vec <- rep(1, data$N)
-    }
-    else {
-      batches_vec <- as.integer(data.matrix(dplyr::select(data$samplem,
-                                                          dplyr::one_of(batches))))
-    }
-    res <- list()
-    covs_mat <- if (is.null(covs))
-      NULL
-    else data.matrix(dplyr::select(data$samplem, dplyr::one_of(covs)))
-    if (verbose)
-      message("Diffusing across graph")
-    prevmedkurt <- Inf
-    for (i in seq_len(maxnsteps)) {
-      s <- diffuse_step(data, s)
-      medkurt <- stats::median(apply(prop.table(s, 2), 1, moments::kurtosis))
-      if (is.null(nsteps)) {
-        if (prevmedkurt - medkurt < 3 & i > 3) {
-          message(glue::glue("stopping after {i} steps"))
-          break
-        }
-        prevmedkurt <- medkurt
-      }
-      else if (i == nsteps) {
+  }
+  covs_keep <- c(covs_keep, samplem_key)
+  samplem_df <- tibble::remove_rownames(unique(dplyr::select(seurat_object@meta.data, dplyr::one_of(covs_keep))))
+  obs_df <- tibble::rownames_to_column(seurat_object@meta.data, 'CellID')
+  if (nrow(samplem_df) == nrow(obs_df)) {
+    stop(
+      'Sample-level metadata is same length as cell-level metadata.
+       Please check that samplem_vars are sample-level covariates.'
+    )
+  }
+
+  rcna_data <- list(
+    samplem = samplem_df,
+    obs = obs_df,
+    connectivities = seurat_object@graphs[[graph_use]],
+    samplem_key = samplem_key,
+    obs_key = 'CellID',
+    N = nrow(samplem_df)
+  )
+  data <- rcna_data
+  suffix <- ''
+
+  # batches numeric vector
+  if (is.null(batches)) {
+    batches_vec <- rep(1, data$N)
+  } else {
+    batches_vec <- as.integer(data.matrix(dplyr::select(data$samplem, dplyr::one_of(batches))))
+  }
+
+  res <- list()
+  covs_mat <- data.matrix(dplyr::select(data$samplem, dplyr::one_of(covs)))
+
+  f <- as.formula(as.character(glue::glue('~0+{data$samplem_key}')))
+  s <- model.matrix(f, data$obs)
+  colnames(s) <- gsub(as.character(glue::glue('^{data$samplem_key}(.*)')), '\\\\1', colnames(s))
+  rownames(s) <- data$obs[[data$obs_key]]
+  s <- s[, data$samplem[[data$samplem_key]]]  # cells x samples indicator
+
+  prevmedkurt <- Inf
+
+  diffuse_step <- function(data, s) {
+    a <- data$connectivities
+    degrees <- Matrix::colSums(a) + 1
+    s_norm <- s / degrees
+    res <- (a %*% s_norm) + s_norm
+    return(as.matrix(res))
+  }
+
+  for (i in seq_len(maxnsteps)) {
+    s <- diffuse_step(data, s)
+    medkurt <- median(apply(prop.table(s, 2), 1, moments::kurtosis))
+    if (is.null(nsteps)) {
+      prevmedkurt <- medkurt
+      if (prevmedkurt - medkurt < 3 && i > 3) {
+        message(glue::glue('stopping after {i} steps'))
         break
       }
+    } else if (i == nsteps) {
+      break
     }
-    snorm <- t(prop.table(s, 2))
-    rownames(snorm) <- data$samplem[[data$samplem_key]]
-    colnames(snorm) <- data$obs[[data$obs_key]]
-    NAM <- snorm
-    if (is.null(batches_vec) | length(unique(batches_vec)) ==
-        1) {
-      message("only one unique batch supplied to qc")
-      keep <- rep(TRUE, ncol(NAM))
-    }
-    else {
-      message("filtering based on batches kurtosis")
-      .batch_kurtosis <- function(NAM, batches_vec) {
-        purrr::imap(split(seq_len(length(batches_vec)), batches_vec),
-                    function(i, b) {
-                      if (length(i) > 1)
-                        Matrix::colMeans(NAM[i, ])
-                      else Matrix::colMeans(t(NAM[i, ]))
-                    }) %>% dplyr::bind_cols() %>% apply(1, moments::kurtosis)
+  }
+
+  snorm <- t(prop.table(s, 2))  # samples x cells
+  rownames(snorm) <- data$samplem[[data$samplem_key]]
+  colnames(snorm) <- data$obs[[data$obs_key]]
+  NAM <- snorm
+
+  N <- nrow(NAM)
+  if (is.null(batches_vec) | length(unique(batches_vec)) == 1) {
+    message('only one unique batch supplied to qc')
+    keep <- rep(TRUE, ncol(NAM))
+  } else {
+    message('filtering based on batches kurtosis')
+  }
+
+  .batch_kurtosis <- function(NAM, batches_vec) {
+    purrr::imap(split(seq_len(length(batches_vec)), batches_vec), function(i, b) {
+      if (length(i) > 1) {
+        Matrix::colMeans(NAM[i, ])
+      } else if (length(i) == 1) {
+        Matrix::colMeans(t(NAM[i, ]))
       }
-      kurtoses <- .batch_kurtosis(NAM, batches_vec)
-      threshold <- max(6, 2 * stats::median(kurtoses))
-      keep <- which(kurtoses < threshold)
-    }
-    N <- nrow(NAM)
-    if (verbose)
-      message("Residualize NAM")
-    NAM_ <- scale(NAM, center = TRUE, scale = FALSE)
-    ncols_C <- 0
-    if (!is.null(covs_mat)) {
-      covs_mat <- scale(covs_mat)
-      ncols_C <- ncols_C + ncol(covs_mat)
-    }
-    if (is.null(covs_mat)) {
-      M <- Matrix::Diagonal(n = N)
-    }
-    else {
-      M <- Matrix::Diagonal(n = N) - covs_mat %*% solve(t(covs_mat) %*%
-                                                          covs_mat, t(covs_mat))
-    }
-    NAM_ <- M %*% NAM_
-    NAM_ <- scale(NAM_, center = FALSE, scale = TRUE)
-    if (verbose)
-      message("Decompose NAM")
-    npcs <- npcs
-    npcs <- min(npcs, nrow(data$samplem) - 1)
-    if (missing(npcs) | npcs > 0.5 * min(dim(NAM_))) {
-      svd_res <- svd(NAM_)
-    }
-    else {
-      svd_res <- RSpectra::svds(NAM_, k = npcs)
-    }
-    U_df <- svd_res$u[, seq_len(npcs)]
-    colnames(U_df) <- paste0("PC", seq_len(npcs))
-    rownames(U_df) <- rownames(NAM_)
-    V_df <- svd_res$v[, seq_len(npcs)]
-    colnames(V_df) <- paste0("PC", seq_len(npcs))
-    rownames(V_df) <- colnames(NAM_)
-    .res_svd_nam <- list(U = U_df, svs = svd_res$d^2, V = V_df)
-    res[[paste0("NAM_sampleXpc", suffix)]] <- .res_svd_nam$U
-    res[[paste0("NAM_svs", suffix)]] <- .res_svd_nam$svs
-    res[[paste0("NAM_varexp", suffix)]] <- .res_svd_nam$svs/nrow(.res_svd_nam$U)/nrow(.res_svd_nam$V)
-    res[[paste0("NAM_nbhdXpc", suffix)]] <- .res_svd_nam$V
-    nam_res <- res
-    V_save <- nam_res[["NAM_nbhdXpc"]]
-    colnames(V_save) <- paste0(key, seq_len(ncol(V_save)))
-    object@nam_pcs <- V_save
-    if (return_nam) {
-      object@NAM_matrix <- NAM
-    }
+    }) |>
+      dplyr::bind_cols() |>
+      apply(1, moments::kurtosis)
+  }
+
+  kurtoses <- .batch_kurtosis(NAM, batches_vec)
+  threshold <- max(6, 2 * median(kurtoses))
+  message(glue::glue('throwing out neighborhoods with batch kurtosis >= {threshold}'))
+  keep <- which(kurtoses < threshold)
+
+  .res_qc_nam <- list(NAM = NAM, keep = keep)
+
+  res <- list()
+  res[[paste0('NAM.T', suffix)]] <- t(.res_qc_nam[[1]])
+  res[[paste0('keptcells', suffix)]] <- .res_qc_nam[[2]]
+  res[[paste0('_batches', suffix)]] <- batches_vec
+
+  if (verbose) message('Residualize NAM')
+  N <- nrow(NAM)
+  NAM_ <- scale(NAM, center = TRUE, scale = FALSE)
+  ncols_C <- 0
+  if (!is.null(covs_mat)) {
+    covs_mat <- scale(covs_mat)
+    ncols_C <- ncols_C + ncol(covs_mat)
+  }
+  if (is.null(covs_mat)) {
+    M <- Matrix::Diagonal(n = N)
+  } else {
+    M <- Matrix::Diagonal(n = N) - covs_mat %*% solve(t(covs_mat) %*% covs_mat, t(covs_mat))
+  }
+  NAM_ <- M %*% NAM_
+
+  .res_resid_nam <- list(
+    NAM_ = scale(NAM_, center = FALSE, scale = TRUE),
+    M = M,
+    r = ncols_C
+  )
+  res[[paste0('_M', suffix)]] <- .res_resid_nam$M
+  res[[paste0('_r', suffix)]] <- .res_resid_nam$r
+
+  if (verbose) message('Decompose NAM')
+
+  # Decide number of PCs
+  n_samples <- nrow(data$samplem)
+  max_rank <- min(nrow(NAM_), ncol(NAM_)) - 1L
+  if (!is.null(n_pcs)) {
+    npcs <- as.integer(n_pcs)
+  } else {
+    npcs <- max(10L, round(max_frac_pcs * n_samples))
+  }
+  npcs <- max(1L, min(npcs, max_rank))
+
+  # Full vs truncated SVD
+  scaled_NAM_ <- scale(NAM_, center = FALSE, scale = TRUE)
+  if (npcs > 0.5 * min(dim(NAM_))) {
+    svd_full <- svd(scaled_NAM_)
+    svd_res <- list(
+      u = svd_full$u[, seq_len(npcs), drop = FALSE],
+      v = svd_full$v[, seq_len(npcs), drop = FALSE],
+      d = svd_full$d[seq_len(npcs)]
+    )
+  } else {
+    svd_res <- RSpectra::svds(scaled_NAM_, k = npcs)
+  }
+
+  # A = U D V^T
+  U_df <- svd_res$u[, seq_len(npcs), drop = FALSE]
+  colnames(U_df) <- paste0('PC', seq_len(npcs))
+  rownames(U_df) <- rownames(NAM_)
+  V_df <- svd_res$v[, seq_len(npcs), drop = FALSE]
+  colnames(V_df) <- paste0('PC', seq_len(npcs))
+  rownames(V_df) <- colnames(NAM_)
+  .res_svd_nam <- list(U = U_df, svs = svd_res$d^2, V = V_df)
+
+  res[[paste0('NAM_sampleXpc', suffix)]] <- .res_svd_nam$U
+  res[[paste0('NAM_svs', suffix)]] <- .res_svd_nam$svs
+  res[[paste0('NAM_varexp', suffix)]] <- .res_svd_nam$svs / nrow(.res_svd_nam$U) / nrow(.res_svd_nam$V)
+  res[[paste0('NAM_nbhdXpc', suffix)]] <- .res_svd_nam$V
+
+  nam_res <- res
+
+  NAMsvd <- list(
+    nam_res$NAM_sampleXpc,
+    nam_res$NAM_svs,
+    nam_res$NAM_nbhdXpc,
+    nam_res$NAM_varexp
+  )
+  names(NAMsvd) <- c("sampleXpc", "svs", "nbhdXpc", "varexp")
+
+  M <- res[[paste0('_M', suffix)]]
+  r <- res[[paste0('_r', suffix)]]
+
+  yvals <- rcna_data$samplem[[test_var]]
+  if (is(yvals, 'character') | is(yvals, 'factor') | is(yvals, 'integer')) {
+    stop(glue::glue('test_var is of class {class(yvals)}. It must be numeric variable for association testing.'))
+  }
+  y <- yvals
+
+  if (is.null(seed)) {
+    set.seed(sample(1e6, 1))
+  }
+  if (force_permute_all) {
+    batches_vec <- rep(1L, length(y))
+  }
+
+  # prep data
+  U <- NAMsvd[[1]]
+  sv <- NAMsvd[[2]]
+  V <- NAMsvd[[3]]
+  y <- scale(y)
+  n <- length(y)
+
+  if (is.null(ks)) {
+    incr <- max(round(0.02 * n), 1)
+    maxnpcs_default <- min(4 * incr, round(n / 5))
+    ks <- seq(incr, min(maxnpcs_default, ncol(U)), incr)
+    ks <- unique(sort(pmax(1L, ks)))
+  }
+
+  .reg <- function(q, k) {
+    Xpc <- U[, 1:k, drop = FALSE]
+    beta <- t(Xpc) %*% q
+    qhat <- Xpc %*% beta
+    return(list(qhat = qhat, beta = beta))
+  }
+
+  .stats <- function(yhat, ycond, k) {
+    ssefull <- as.numeric(crossprod(yhat - ycond))
+    ssered <- as.numeric(crossprod(ycond))
+    deltasse <- ssered - ssefull
+    f <- (deltasse / k) / (ssefull / n)
+    p <- -pf(f, k, n - (1 + r + k), log.p = TRUE)
+    r2 <- 1 - ssefull / ssered
+    return(list(p = p, r2 = r2))
+  }
+
+  .minp_stats <- function(z) {
+    zcond <- scale(M %*% z, center = FALSE, scale = TRUE)
+    qhats <- purrr::map(ks, function(k) .reg(zcond, k)$qhat)
+    .tmp <- purrr::map2(qhats, ks, function(qhat, k) .stats(qhat, zcond, k))
+    ps <- purrr::map_dbl(.tmp, 'p')
+    r2s <- purrr::map_dbl(.tmp, 'r2')
+    k_ <- which.min(ps)
+    return(list(k = ks[k_], p = ps[k_], r2 = r2s[k_]))
+  }
+
+  # get non-null f-test p-value
+  .tmp <- .minp_stats(y)
+  k <- .tmp$k
+  p <- .tmp$p
+  r2 <- .tmp$r2
+  if (k == max(ks)) {
+    warning(glue::glue('data supported use of {k} NAM PCs, which is the maximum considered. Consider allowing more PCs by using the "ks" argument.'))
+  }
+
+  # compute coefficients and r2 with chosen model
+  ycond <- scale(M %*% y, center = FALSE, scale = TRUE)
+  .tmp <- .reg(ycond, k)
+  yhat <- .tmp$qhat
+  beta <- .tmp$beta
+  r2_perpc <- (beta / as.numeric(sqrt(crossprod(ycond))))**2
+
+  ncorrs <- V[, 1:k, drop = FALSE] %*% (sqrt(sv[1:k]) * beta / n)
+  rownames(ncorrs) <- rownames(V)
+
+  set.seed(seed)
+  y_ <- conditional_permutation(batches_vec, y, Nnull)
+  .tmp <- apply(y_, 2, .minp_stats)
+  nullminps <- purrr::map_dbl(.tmp, 'p')
+  nullr2s <- purrr::map_dbl(.tmp, 'r2')
+
+  pfinal <- (sum(nullminps <= p + 1e-8) + 1) / (Nnull + 1)
+  if (sum(nullminps <= p + 1e-8) == 0) {
+    warning('global association p-value attained minimal possible value. Consider increasing Nnull')
+  }
+
+  # get neighborhood fdrs if requested
+  fdrs <- NULL
+  fdr_5p_t <- NULL
+  fdr_10p_t <- NULL
+  fdr_20p_t <- NULL
+  fdr_30p_t <- NULL
+  fdr_40p_t <- NULL
+  fdr_50p_t <- NULL
+
+  if (local_test) {
+    message('computing neighborhood-level FDRs')
+    Nnull <- min(1000, Nnull)
+    y_ <- y_[, 1:Nnull, drop = FALSE]
+    ycond_ <- scale(M %*% y_, center = FALSE, scale = TRUE)
+    gamma_ <- crossprod(U[, 1:k, drop = FALSE], ycond_)
+    nullncorrs <- abs(V[, 1:k, drop = FALSE] %*% (sqrt(sv[1:k]) * (gamma_ / n)))
+
+    maxcorr <- max(abs(ncorrs))
+    fdr_thresholds <- seq(maxcorr / 4, maxcorr, maxcorr / 400)
+    fdr_vals <- empirical_fdrs(ncorrs, nullncorrs, fdr_thresholds)
+    fdrs <- data.frame(
+      threshold = head(fdr_thresholds, -1),
+      fdr = fdr_vals,
+      num_detected = purrr::map_dbl(head(fdr_thresholds, -1), function(.t) sum(abs(ncorrs) > .t))
+    )
+    # find minimal thresholds giving desired FDRs
+    if (min(fdrs$fdr) <= 0.05) fdr_5p_t  <- min(subset(fdrs, fdr < 0.05)$threshold)
+    if (min(fdrs$fdr) <= 0.10) fdr_10p_t <- min(subset(fdrs, fdr < 0.10)$threshold)
+    if (min(fdrs$fdr) <= 0.20) fdr_20p_t <- min(subset(fdrs, fdr < 0.20)$threshold)
+    if (min(fdrs$fdr) <= 0.30) fdr_30p_t <- min(subset(fdrs, fdr < 0.30)$threshold)
+    if (min(fdrs$fdr) <= 0.40) fdr_40p_t <- min(subset(fdrs, fdr < 0.40)$threshold)
+    if (min(fdrs$fdr) <= 0.50) fdr_50p_t <- min(subset(fdrs, fdr < 0.50)$threshold)
+  }
+
+  res <- list(
+    p = pfinal,
+    nullminps = nullminps,
+    k = k,
+    ncorrs = ncorrs,
+    fdrs = fdrs,
+    fdr_5p_t = fdr_5p_t,
+    fdr_10p_t = fdr_10p_t,
+    yhat = yhat,
+    ycond = ycond,
+    ks = ks,
+    beta = beta,
+    r2 = r2,
+    r2_perpc = r2_perpc,
+    nullr2_mean = mean(nullr2s),
+    nullr2_std = sd(nullr2s)
+  )
+
+  if (return_nam) {
+    res[['NAM_embeddings']] <- nam_res$NAM_nbhdXpc
+    res[['NAM_loadings']] <- nam_res$NAM_sampleXpc
+    res[['NAM_svs']] <- nam_res$NAM_svs
+    res[['NAM_varexp']] <- nam_res$NAM_varexp
+    res[['NAM']] <- t(NAM)
+  }
+
+  seurat_object[['cna']] <- Seurat::CreateDimReducObject(
+    embeddings = res$NAM_embeddings,
+    loadings = res$NAM_loadings,
+    stdev = res$NAM_svs,
+    assay = assay,
+    key = key,
+    misc = res
+  )
+
+  seurat_object@meta.data$cna_ncorrs <- ncorrs[colnames(seurat_object), , drop = TRUE]
+
+  seurat_object@meta.data$cna_ncorrs_fdr05 <- rep(0, nrow(seurat_object@meta.data))
+  if (!is.null(fdr_5p_t)) {
+    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_5p_t)
+    seurat_object@meta.data$cna_ncorrs_fdr05[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
+  }
+
+  seurat_object@meta.data$cna_ncorrs_fdr10 <- rep(0, nrow(seurat_object@meta.data))
+  if (!is.null(fdr_10p_t)) {
+    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_10p_t)
+    seurat_object@meta.data$cna_ncorrs_fdr10[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
+  }
+
+  seurat_object@meta.data$cna_ncorrs_fdr20 <- rep(0, nrow(seurat_object@meta.data))
+  if (!is.null(fdr_20p_t)) {
+    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_20p_t)
+    seurat_object@meta.data$cna_ncorrs_fdr20[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
+  }
+
+  seurat_object@meta.data$cna_ncorrs_fdr30 <- rep(0, nrow(seurat_object@meta.data))
+  if (!is.null(fdr_30p_t)) {
+    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_30p_t)
+    seurat_object@meta.data$cna_ncorrs_fdr30[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
+  }
+
+  seurat_object@meta.data$cna_ncorrs_fdr40 <- rep(0, nrow(seurat_object@meta.data))
+  if (!is.null(fdr_40p_t)) {
+    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_40p_t)
+    seurat_object@meta.data$cna_ncorrs_fdr40[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
+  }
+
+  seurat_object@meta.data$cna_ncorrs_fdr50 <- rep(0, nrow(seurat_object@meta.data))
+  if (!is.null(fdr_50p_t)) {
+    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_50p_t)
+    seurat_object@meta.data$cna_ncorrs_fdr50[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
+  }
+
+  ## ---- NEW: if scLASER object passed, save and return it instead ----
+  if (!is.null(object) && return_nam) {
+    object@NAM_matrix <- res[['NAM']]
+    object@nam_pcs    <- res[['NAM_sampleXpc']]
     return(object)
   }
 
+  return(seurat_object)
+}
