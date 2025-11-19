@@ -5,10 +5,8 @@
 \title{Association testing between NAM embeddings and a sample-level variable}
 \usage{
 association_nam_LV(
-  object = NULL,
+  obj,
   seurat_object = NULL,
-  metadata = NULL,
-  pcs = NULL,
   test_var = NULL,
   samplem_key = NULL,
   graph_use = "RNA_snn",
@@ -33,13 +31,6 @@ association_nam_LV(
 \item{seurat_object}{A `Seurat` object. If provided, it must contain at least one
 cell-cell graph in `object@graphs` (e.g. after `FindNeighbors()`).
 If `NULL`, you must provide both `metadata` and `pcs`.}
-
-\item{metadata}{A data.frame of sample-level metadata (rows = samples, columns = covariates).
-Required only when `seurat_object` is `NULL`. Must include `test_var`, any `batches`/`covs`,
-and the `samplem_key` column that links samples to cells.}
-
-\item{pcs}{A numeric matrix of precomputed embeddings (rows = samples, cols = PCs)
-used to build a graph when `seurat_object` is `NULL`. Ignored otherwise.}
 
 \item{test_var}{Character. Name of the numeric sample-level variable to test
 (must be a column of `metadata` or `seurat_object@meta.data` after aggregation).}
@@ -83,6 +74,13 @@ in the min-\emph{p} procedure. If `NULL`, a data-driven sequence is used.}
 
 \item{return_nam}{Logical. If `TRUE`, store NAM embeddings/loadings/singular values/variance explained
 in the returned reduction. Default `TRUE`.}
+
+\item{metadata}{A data.frame of sample-level metadata (rows = samples, columns = covariates).
+Required only when `seurat_object` is `NULL`. Must include `test_var`, any `batches`/`covs`,
+and the `samplem_key` column that links samples to cells.}
+
+\item{pcs}{A numeric matrix of precomputed embeddings (rows = samples, cols = PCs)
+used to build a graph when `seurat_object` is `NULL`. Ignored otherwise.}
 }
 \value{
 A `Seurat` object where:

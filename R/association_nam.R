@@ -108,10 +108,9 @@
 #'
 #' @export
 
-association_nam_LV <- function(object = NULL,
-                               seurat_object = NULL,
-                               metadata = NULL,
-                               pcs = NULL,
+association_nam_LV <- function(obj,seurat_object = NULL,
+                               #  metadata = NULL,
+                               # pcs = NULL,
                                test_var = NULL,
                                samplem_key = NULL,
                                graph_use = 'RNA_snn',
@@ -130,34 +129,29 @@ association_nam_LV <- function(object = NULL,
                                local_test = TRUE,
                                seed = 1234,
                                return_nam = TRUE) {
-
-  ## ---- NEW: pull metadata/pcs from scLASER object if provided ----
-  if (!is.null(object)) {
-    metadata <- object@metadata
-    pcs      <- object@harmony
-  }
-
-  if (!is.null(seurat_object) && is.null(metadata) && is.null(pcs)) {
+  if (!is.null(seurat_object) && is.null(obj@metadata) && is.null(obj@harmony)) {
     message("will use Seurat object following analysis...")
-  } else if (is.null(seurat_object) && !is.null(metadata) && !is.null(pcs)) {
+  } else if (is.null(seurat_object) && !is.null(obj@metadata) && !is.null(obj@harmony)) {
     # build a minimal Seurat object from metadata + precomputed PCs (stored as 'harmony' reduction)
-    meta <- metadata
+
+
+    meta <- obj@metadata
     rownames(meta) <- 1:nrow(meta)
 
-    m <- as(t(pcs), "dgTMatrix")
+    m <- as(t(obj@harmony), "dgTMatrix")
     colnames(m) <- 1:ncol(m)
 
-    obj <- Seurat::CreateSeuratObject(
+    obj1 <- Seurat::CreateSeuratObject(
       counts = m,
       meta.data = meta,
       assay = 'RNA',
       names.field = 1
     )
 
-    harmony_embeddings_all <- pcs
+    harmony_embeddings_all <- obj@harmony
     rownames(harmony_embeddings_all) <- 1:nrow(harmony_embeddings_all)
 
-    obj@reductions$harmony <- Seurat::CreateDimReducObject(
+    obj1@reductions$harmony <- Seurat::CreateDimReducObject(
       embeddings = harmony_embeddings_all,
       stdev = as.numeric(apply(harmony_embeddings_all, 2, stats::sd)),
       assay = "RNA",
@@ -167,11 +161,11 @@ association_nam_LV <- function(object = NULL,
     # Use requested number of PCs for neighbor graph if provided
     dims_use <- 1:min(ifelse(is.null(n_pcs), 20L, as.integer(n_pcs)),
                       ncol(harmony_embeddings_all))
-    obj <- obj %>%
+    obj1 <- obj1 %>%
       Seurat::FindNeighbors(verbose = TRUE, reduction = 'harmony',
                             dims = dims_use, k.param = 30, nn.eps = 0)
 
-    seurat_object <- obj
+    seurat_object <- obj1
   } else if ((is.null(seurat_object) && is.null(metadata) && !is.null(pcs)) ||
              (is.null(seurat_object) && !is.null(metadata) && is.null(pcs))) {
     stop('Must provide both metadata and precomputed PCs')
@@ -226,7 +220,7 @@ association_nam_LV <- function(object = NULL,
 
   f <- as.formula(as.character(glue::glue('~0+{data$samplem_key}')))
   s <- model.matrix(f, data$obs)
-  colnames(s) <- gsub(as.character(glue::glue('^{data$samplem_key}(.*)')), '\\\\1', colnames(s))
+  colnames(s) <- gsub(as.character(glue::glue('^{data$samplem_key}(.*)')), '\\1', colnames(s))
   rownames(s) <- data$obs[[data$obs_key]]
   s <- s[, data$samplem[[data$samplem_key]]]  # cells x samples indicator
 
@@ -557,12 +551,9 @@ association_nam_LV <- function(object = NULL,
     seurat_object@meta.data$cna_ncorrs_fdr50[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
   }
 
-  ## ---- NEW: if scLASER object passed, save and return it instead ----
-  if (!is.null(object) && return_nam) {
-    object@NAM_matrix <- res[['NAM']]
-    object@nam_pcs    <- res[['NAM_sampleXpc']]
-    return(object)
-  }
+  obj@nam_pcs =nam_res$NAM_sampleXpc
+  obj@NAM_matrix = t(NAM)
 
-  return(seurat_object)
+  #return(seurat_object)
+  return(obj)
 }
