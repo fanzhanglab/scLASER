@@ -59,14 +59,6 @@ devtools::install_github("fanzhanglab/scLASER")
 - [General data simulation overview](vignettes/Data_simulation.html)
 
 
-<br/>
-
-## Citations
-
-**Authors:**  
-Lauren Vanderlinden (lauren.vanderlinden@cuanschutz.edu)  
-Juan Vargas (juan.vargas@cuanschutz.edu)  
-Fan Zhang (fanzhanglab@gmail.com)
 
 
 <br/>
