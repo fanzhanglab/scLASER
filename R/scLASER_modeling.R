@@ -1,3 +1,12 @@
+
+#' Title
+#'
+#' @param object
+#'
+#' @return
+#' @export
+#'
+#' @examples
 scLASER_modeling <- function(object) {
   forAnalysis <- cbind(object@metadata,
                        as.data.frame(object@nam_pcs))
