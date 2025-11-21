@@ -551,7 +551,7 @@ association_nam_LV <- function(obj,seurat_object = NULL,
     seurat_object@meta.data$cna_ncorrs_fdr50[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
   }
 
-  obj@nam_pcs =nam_res$NAM_sampleXpc
+  obj@nam_pcs =nam_res$NAM_nbhdXpc
   obj@NAM_matrix = t(NAM)
 
   #return(seurat_object)
