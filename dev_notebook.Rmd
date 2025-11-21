@@ -75,6 +75,11 @@ assosiation function long analysis
 
 ```{r}
 
+
+forAnalysis <- data.frame(meta, nam_pcs)
+forAnalysis$visit_factor <- paste0("V", forAnalysis$visit)
+outcomes <- colnames(nam_pcs)
+
 # 2 time point, not selecting
 # function for association
 getLMM <- function(pc){
@@ -101,6 +106,13 @@ getLMM <- function(pc){
 
 
 
+
+```
+
+
+```{r}
+
+devtools::install_github("fanzhanglab/scLASER",auth_token  = "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",force = T)
 
 ```
 
