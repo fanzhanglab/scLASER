@@ -24,6 +24,8 @@ scLASER S4 class
 
 \item{\code{NAM_matrix}}{matrix or NULL}
 
+\item{\code{plsda_LV}}{matrix or NULL (latent variables from PLS-DA)}
+
 \item{\code{pipeline_output}}{data.frame or NULL}
 }}
 

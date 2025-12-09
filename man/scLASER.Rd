@@ -12,6 +12,7 @@ scLASER(
   harmony = NULL,
   nam_pcs = NULL,
   NAM_matrix = NULL,
+  plsda_LV = NULL,
   pipeline_output = NULL
 )
 }
