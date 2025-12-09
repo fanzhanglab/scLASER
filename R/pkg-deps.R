@@ -24,4 +24,5 @@
 #' @import nlme
 #' @import uwot
 #' @import parallel
+#' @import mixOmics
 NULL
