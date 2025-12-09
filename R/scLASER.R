@@ -1,16 +1,16 @@
-
 setClassUnion("matrixOrNULL", c("matrix", "NULL"))
 setClassUnion("dfOrNULL",     c("data.frame", "NULL"))
 
 #' scLASER S4 class
 #'
-#' @slot metadata data.frame
-#' @slot pcs matrix or NULL
-#' @slot masc data.frame or NULL
-#' @slot umap data.frame or NULL
-#' @slot harmony matrix or NULL
-#' @slot nam_pcs matrix or NULL
-#' @slot NAM_matrix matrix or NULL
+#' @slot metadata        data.frame
+#' @slot pcs             matrix or NULL
+#' @slot masc            data.frame or NULL
+#' @slot umap            data.frame or NULL
+#' @slot harmony         matrix or NULL
+#' @slot nam_pcs         matrix or NULL
+#' @slot NAM_matrix      matrix or NULL
+#' @slot plsda_LV        matrix or NULL (latent variables from PLS-DA)
 #' @slot pipeline_output data.frame or NULL
 #'
 #' @exportClass scLASER
@@ -25,6 +25,7 @@ setClass(
     harmony         = "matrixOrNULL",
     nam_pcs         = "matrixOrNULL",
     NAM_matrix      = "matrixOrNULL",
+    plsda_LV        = "matrixOrNULL",
     pipeline_output = "dfOrNULL"
   ),
   prototype = list(
@@ -35,28 +36,33 @@ setClass(
     harmony         = NULL,
     nam_pcs         = NULL,
     NAM_matrix      = NULL,
+    plsda_LV        = NULL,
     pipeline_output = NULL
   )
 )
 
 #' Create a scLASER object
+#'
 #' @export
-scLASER <- function(metadata = data.frame(),
-                    pcs = NULL,
-                    masc = NULL,
-                    umap = NULL,
-                    harmony = NULL,
-                    nam_pcs = NULL,
-                    NAM_matrix = NULL,
+scLASER <- function(metadata        = data.frame(),
+                    pcs             = NULL,
+                    masc            = NULL,
+                    umap            = NULL,
+                    harmony         = NULL,
+                    nam_pcs         = NULL,
+                    NAM_matrix      = NULL,
+                    plsda_LV        = NULL,
                     pipeline_output = NULL) {
-  methods::new("scLASER",
-               metadata        = metadata,
-               pcs             = pcs,
-               masc            = masc,
-               umap            = umap,
-               harmony         = harmony,
-               nam_pcs         = nam_pcs,
-               NAM_matrix      = NAM_matrix,
-               pipeline_output = pipeline_output)
+  methods::new(
+    "scLASER",
+    metadata        = metadata,
+    pcs             = pcs,
+    masc            = masc,
+    umap            = umap,
+    harmony         = harmony,
+    nam_pcs         = nam_pcs,
+    NAM_matrix      = NAM_matrix,
+    plsda_LV        = plsda_LV,
+    pipeline_output = pipeline_output
+  )
 }
-
