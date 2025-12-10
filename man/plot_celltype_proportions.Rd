@@ -2,13 +2,25 @@
 % Please edit documentation in R/plot_celltype_proportions.R
 \name{plot_celltype_proportions}
 \alias{plot_celltype_proportions}
-\title{Title}
+\title{Plot cell type proportions across visits}
 \usage{
-plot_celltype_proportions(object)
+plot_celltype_proportions(object, highlight_cell_types = c("A", "B", "I", "J"))
 }
 \arguments{
-\item{object}{}
+\item{object}{scLASER object}
+
+\item{highlight_cell_types}{Optional character vector of cell type names
+to mark with an asterisk (e.g., interacting / changing types). Default:
+c("A", "B", "I", "J"). Set to NULL to disable highlighting.}
+}
+\value{
+A ggplot object (invisibly)
 }
 \description{
-Title
+Plot cell type proportions across visits
+}
+\examples{
+plot_celltype_proportions(obj)  # defaults (A,B,I,J starred)
+plot_celltype_proportions(obj, highlight_cell_types = c("C","D"))
+plot_celltype_proportions(obj, highlight_cell_types = NULL)
 }
