@@ -37,7 +37,8 @@ Imports:
     pbapply,
     purrr,
     tidyr,
-    uwot
+    uwot,
+    mixOmics,
 Suggests:
     rmarkdown,
     knitr,
