@@ -66,7 +66,7 @@ mixOmics_plsda <- function(object,
   ## 5. Save latent variables (scores) into LV slot ----
   # mixOmics convention: fit$variates$X is an n_cells x ncomp matrix
   LV <- fit$variates$X
-  object@LV <- as.matrix(LV)
+  object@plsda_LV <- as.matrix(LV)
 
 
   object
