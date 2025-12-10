@@ -18,8 +18,7 @@
 #'   latent variables (`n_cells x ncomp` matrix).
 #'
 #' @export
-#' @importFrom mixOmics plsda withinVariation
-scLASER_plsda <- function(object,
+mixOmics_plsda <- function(object,
                           response_var   = "cell_type",
                           multilevel_var = NULL,
                           ncomp          = 2,
