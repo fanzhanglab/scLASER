@@ -3,7 +3,7 @@
 #' Wrapper around [mixOmics::plsda()] that pulls the feature matrix from a
 #' `scLASER` object, constructs class labels from metadata, optionally performs
 #' multilevel decomposition, fits PLS-DA, and saves the latent variables
-#' (component scores) into `object@LV`.
+#' (component scores) into `object@plsda_LV`.
 #'
 #' @param object        A `scLASER` object.
 #' @param response_var  Character. Column in `object@metadata` used as class
@@ -14,7 +14,7 @@
 #' @param ncomp         Integer. Number of latent components to compute.
 #' @param ...           Additional arguments passed to [mixOmics::plsda()].
 #'
-#' @return A `scLASER` object with the `LV` slot populated with the PLS-DA
+#' @return A `scLASER` object with the `plsda_LV` slot populated with the PLS-DA
 #'   latent variables (`n_cells x ncomp` matrix).
 #'
 #' @export
