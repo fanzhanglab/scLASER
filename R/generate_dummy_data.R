@@ -1,29 +1,3 @@
-#' Title
-#'
-#' @param n_cells
-#' @param sd_celltypes
-#' @param n_major_cell_types
-#' @param n_minor_cell_types
-#' @param relative_abundance
-#' @param n_major_interact_celltypes
-#' @param n_minor_interact_celltypes
-#' @param n_individuals
-#' @param n_batchs
-#' @param interaction_feature
-#' @param time_points
-#' @param test_var
-#' @param prop_disease
-#' @param fc_interact
-#' @param interaction_type
-#' @param seed
-#' @param visit_effects_progressor
-#' @param visit_effects_control
-#' @param direction_by_cluster
-#'
-#' @return
-#' @export
-#'
-#' @examples
 #' Simulate longitudinal single-cell data with interacting cell types
 #'
 #' @param n_cells Baseline cells per major cell type per sample.
@@ -60,24 +34,31 @@
 #' @return A data.frame of simulated single-cell metadata.
 #' @export
 generate_dummy_data <- function(
-    n_cells = 3000,                  # baseline cells per major cell type per sample
-    sd_celltypes = 0.10,             # relative sd for counts
-    relative_abundance = 0.10,       # minor vs major baseline ratio
-    n_individuals = 30,
-    n_batchs = 4,
+  n_cells = 3000,                  # baseline cells per major cell type per sample
+  sd_celltypes = 0.10,             # relative sd for counts
+  n_major_cell_types = 7,
+  n_minor_cell_types = 3,
+  relative_abundance = 0.10,       # minor vs major baseline ratio
+  n_major_interact_celltypes = 1,  # how many majors are "interacting"
+  n_minor_interact_celltypes = 1,  # how many minors are "interacting"
+  n_individuals = 30,
+  n_batchs = 4,
 
-    interaction_feature = "visit",   # kept for labeling
-    time_points = 4,                 # >= 2; works for 3+
-    test_var = "disease",
-    prop_disease = 0.50,
+  interaction_feature = "visit",   # kept for labeling
+  time_points = 4,                 # >= 2; works for 3+
+  test_var = "disease",
+  prop_disease = 0.50,
 
-    fc_interact = 0.10,              # effect magnitude used by defaults below
-    interaction_type = c("specific","differential","opposite"),
-    seed = 1234,
+  fc_interact = 0.10,              # effect magnitude used by defaults below
+  interaction_type = c("specific","differential","opposite"),
+  seed = 1234,
 
+  visit_effects_progressor = NULL, # multiplicative change: +0.1 means +10% vs baseline
+  visit_effects_control    = NULL, # default 0s
+  direction_by_cluster     = NULL, # +1/-1 for interacting clusters, recycled as needed
 
-    effect_mat_progressor    = NULL, # NEW: cell_type x time_points matrix for progressors
-    effect_mat_control       = NULL  # NEW: same for controls
+  effect_mat_progressor    = NULL, # NEW: cell_type x time_points matrix for progressors
+  effect_mat_control       = NULL  # NEW: same for controls
 ) {
   set.seed(seed)
   interaction_type <- match.arg(interaction_type)
