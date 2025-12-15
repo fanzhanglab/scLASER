@@ -359,7 +359,7 @@ plot_top_nam_pc_umap(obj2, facet_by = NULL)
 ## B1. Simulate 3TP data
 
 ```{r}
-cell_types  <- LETTERS[1:(2 + 1)]  # A-G (5 major + 2 minor)
+cell_types  <- LETTERS[1:(5 + 2)]  # A-G (5 major + 2 minor)
 time_points <- 3                   # V0, V1, V2
 
 E_prog <- matrix(
