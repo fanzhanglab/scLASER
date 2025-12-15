@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_dummy_data.R
 \name{generate_dummy_data}
 \alias{generate_dummy_data}
-\title{Title}
+\title{Simulate longitudinal single-cell data with interacting cell types}
 \usage{
 generate_dummy_data(
   n_cells = 3000,
@@ -23,12 +23,66 @@ generate_dummy_data(
   seed = 1234,
   visit_effects_progressor = NULL,
   visit_effects_control = NULL,
-  direction_by_cluster = NULL
+  direction_by_cluster = NULL,
+  effect_mat_progressor = NULL,
+  effect_mat_control = NULL
 )
 }
 \arguments{
-\item{direction_by_cluster}{}
+\item{n_cells}{Baseline cells per major cell type per sample.}
+
+\item{sd_celltypes}{Relative SD for counts.}
+
+\item{n_major_cell_types}{Number of major cell types.}
+
+\item{n_minor_cell_types}{Number of minor cell types.}
+
+\item{relative_abundance}{Baseline minor:major ratio.}
+
+\item{n_major_interact_celltypes}{How many major types are "interacting".}
+
+\item{n_minor_interact_celltypes}{How many minor types are "interacting".}
+
+\item{n_individuals}{Number of subjects.}
+
+\item{n_batchs}{Number of batches.}
+
+\item{interaction_feature}{Name of the time/visit variable (e.g. "visit").}
+
+\item{time_points}{Number of longitudinal time points (>= 2).}
+
+\item{test_var}{Name of the disease/exposure variable (e.g. "disease").}
+
+\item{prop_disease}{Proportion of diseased subjects.}
+
+\item{fc_interact}{Effect magnitude used by the default effect patterns.}
+
+\item{interaction_type}{One of "specific", "differential", or "opposite"
+for the default longitudinal pattern (when design matrices are not given).}
+
+\item{seed}{Random seed.}
+
+\item{visit_effects_progressor}{Optional vector of length `time_points`
+for default progressor visit effects (ignored if design matrices given).}
+
+\item{visit_effects_control}{Optional vector of length `time_points`
+for default control visit effects (ignored if design matrices given).}
+
+\item{direction_by_cluster}{Optional vector of +1 / -1 per interacting
+cell type (ignored if design matrices given).}
+
+\item{effect_mat_progressor}{Optional numeric matrix of dimension
+`n_cell_types x time_points` giving effect sizes for progressors.
+Rows correspond to cell types (by name or order), columns to visits
+(0..time_points-1). If provided (along with `effect_mat_control`),
+overrides `visit_effects_*` and `direction_by_cluster`.}
+
+\item{effect_mat_control}{Optional numeric matrix of same dimension as
+`effect_mat_progressor` giving effects for controls.}
+}
+\value{
+A data.frame of simulated single-cell metadata.
 }
 \description{
-Title
+Simulate longitudinal single-cell data with interacting cell types
 }

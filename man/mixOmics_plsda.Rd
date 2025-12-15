@@ -9,6 +9,11 @@ mixOmics_plsda(
   response_var = "cell_type",
   multilevel_var = NULL,
   ncomp = 2,
+  cv_longitudinal = FALSE,
+  cv_subject_var = "subject_id",
+  cv_K = 5,
+  cv_max_ncomp = ncomp,
+  cv_seed = NULL,
   ...
 )
 }
@@ -20,19 +25,52 @@ label (default `"cell_type"`).}
 
 \item{multilevel_var}{Optional character. Column in `object@metadata`
 identifying repeated-measures units (e.g. `"sample_id"`). If not `NULL`,
-multilevel PLS-DA is performed via [mixOmics::withinVariation()].}
+multilevel PLS-DA is performed via [mixOmics::withinVariation()] prior
+to fitting.}
 
-\item{ncomp}{Integer. Number of latent components to compute.}
+\item{ncomp}{Integer. Number of latent components to compute for
+the main PLS-DA fit and for CV (upper bound).}
+
+\item{cv_longitudinal}{Logical. If `TRUE`, perform subject-wise longitudinal
+CV as described above. Default is `FALSE`.}
+
+\item{cv_subject_var}{Character. Column in `object@metadata` that defines
+the subject ID for CV folds (default `"subject_id"`).}
+
+\item{cv_K}{Integer. Number of folds for longitudinal CV
+(default `5`).}
+
+\item{cv_max_ncomp}{Integer. Maximum number of components to evaluate in
+longitudinal CV. Default is `ncomp`. Values greater than `ncomp` are
+truncated to `ncomp`.}
+
+\item{cv_seed}{Optional integer seed for reproducible fold creation.
+If `NULL`, the current RNG state is used.}
 
 \item{...}{Additional arguments passed to [mixOmics::plsda()].}
 }
 \value{
-A `scLASER` object with the `LV` slot populated with the PLS-DA
-  latent variables (`n_cells x ncomp` matrix).
+A `scLASER` object with:
+  \itemize{
+    \item `@plsda_LV` populated with the PLS-DA latent variables
+      (scores; `n_cells x ncomp`).
+    \item If `cv_longitudinal = TRUE`, an attribute `plsda_cv` attached:
+      `attr(object, "plsda_cv")`, a list with elements
+      `ber` (numeric BER per component),
+      `opt_ncomp` (optimal number of components),
+      and `ncomp_seq` (sequence of components evaluated).
+  }
 }
 \description{
 Wrapper around [mixOmics::plsda()] that pulls the feature matrix from a
 `scLASER` object, constructs class labels from metadata, optionally performs
 multilevel decomposition, fits PLS-DA, and saves the latent variables
-(component scores) into `object@LV`.
+(component scores) into `object@plsda_LV`.
+}
+\details{
+Optionally, a subject-wise longitudinal cross-validation (CV) is performed,
+where folds are created at the subject level (all visits for a subject are
+kept in the same fold) and the Balanced Error Rate (BER) is computed for
+1..`cv_max_ncomp` components. CV results are attached as
+`attr(object, "plsda_cv")`.
 }
