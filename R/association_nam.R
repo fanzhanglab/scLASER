@@ -108,7 +108,7 @@
 #'
 #' @export
 
-association_nam_LV <- function(obj,seurat_object = NULL,
+association_nam_scLASER <- function(obj,seurat_object = NULL,
                                #  metadata = NULL,
                                # pcs = NULL,
                                test_var = NULL,
