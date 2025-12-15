@@ -8,10 +8,6 @@
 #' @return A ggplot object (invisibly)
 #' @export
 #'
-#' @examples
-#' plot_celltype_proportions(obj)  # defaults (A,B,I,J starred)
-#' plot_celltype_proportions(obj, highlight_cell_types = c("C","D"))
-#' plot_celltype_proportions(obj, highlight_cell_types = NULL)
 plot_celltype_proportions <- function(object,
                                       highlight_cell_types = c("A", "B", "I", "J")) {
   stopifnot(inherits(object, "scLASER"))
