@@ -37,7 +37,6 @@ devtools::install_github("fanzhanglab/scLASER")
 - Matrix
 - nlme
 - lme4
-- dplyr
 - pbapply
 - purrr
 - caret
@@ -55,8 +54,8 @@ devtools::install_github("fanzhanglab/scLASER")
 
 ## Tutorials
 
-- [Simulated data and pipeline tutorial](vignettes/Simulated_data_pipeline.html)
-- [General data simulation overview](vignettes/Data_simulation.html)
+- [scLASER Pipeline tutorial](vignettes/Simulated_data_pipeline.html)
+- [Data simulation](vignettes/Data_simulation.html)
 
 
 
