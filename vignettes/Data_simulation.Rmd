@@ -47,26 +47,48 @@ library(tidyr)
 library(ggplot2)
 ```
 
-# 1. How visit effects control the simulation
+# 1. How longitudinal effects control the simulation
 
-The three arguments below **jointly control** how interacting cell types evolve across visits and differ between groups:
+Longitudinal changes in cell-type abundance are specified using **effect design matrices** that explicitly encode how each cell type evolves across visits and differs between groups.
 
-- `visit_effects_progressor` — a numeric **vector of length = time_points** giving per-visit **proportional changes** for **disease = 1** (progressors). Example: `c(0.00, 0.30)` means no change at V0 and **+30%** at V1. Negative values decrease abundance.
-- `visit_effects_control` — same structure for **disease = 0** (controls). Often all zeros to represent stability.
-- `direction_by_cluster` — a vector of **+1 / −1** (recycled as needed) applied **per interacting cell type**. `+1` means the effect increases abundance; `−1` flips the sign (decrease).
+In this framework:
 
-**Example (5 visits):**  
-```r
-visit_effects_progressor = c(0.00, 0.30, 0.60, 0.20, 0.40)
-visit_effects_control    = c(0,    0,    0,    0,    0)
-direction_by_cluster     = c(+1, -1, +1, -1)   # recycled across interacting CTs
-```
+- **Rows correspond to cell types** (e.g., A, B, C, …).
+- **Columns correspond to visits** (V0, V1, V2, …).
+- **Matrix entries represent proportional changes** relative to baseline.
+  - Positive values indicate enrichment.
+  - Negative values indicate depletion.
+  - A value of `0` indicates no change.
+
+Two matrices are provided:
+
+- `effect_mat_progressor` — effects for individuals with `disease = 1`
+- `effect_mat_control` — effects for individuals with `disease = 0`
 
 ---
 
 # 2. Two Time Points (V0, V1)
 
 ```{r}
+cell_types  <- LETTERS[1:(7 + 3)]  # A-J
+time_points <- 2                   # V0, V1
+
+E_prog <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_ctrl <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_prog["A", ] <- c(0.00, +0.30)
+E_prog["B", ] <- c(0.00, -0.30)
+E_prog["I", ] <- c(0.00, +0.30)
+E_prog["J", ] <- c(0.00, -0.30)
+
+set.seed(2020)
 d2 <- generate_dummy_data(
   n_cells = 150,
   sd_celltypes = 0.1,
@@ -81,18 +103,18 @@ d2 <- generate_dummy_data(
   time_points = 2,
   test_var = "disease",
   prop_disease = 0.5,
-  fc_interact = 0.6,
-  interaction_type = "specific",
   seed = 2020,
-  visit_effects_progressor = c(0.00, 0.30),
-  visit_effects_control    = c(0, 0),
-  direction_by_cluster     = c(+1, -1, +1, -1)
+  effect_mat_progressor = E_prog,
+  effect_mat_control    = E_ctrl
 )
 
 obj2 <- scLASER(metadata = d2)
-
-
 plot_celltype_proportions(obj2)
+
+
+E_prog
+
+E_ctrl
 ```
 
 ---
@@ -100,6 +122,23 @@ plot_celltype_proportions(obj2)
 # 3. Three Time Points (V0, V1, V2)
 
 ```{r}
+time_points <- 3
+
+E_prog <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_ctrl <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_prog["A", ] <- c(0.00, 0.30, 0.60)
+E_prog["B", ] <- c(0.00, -0.30, -0.60)
+E_prog["I", ] <- c(0.00, 0.30, 0.60)
+E_prog["J", ] <- c(0.00, -0.30, -0.60)
+
 d3 <- generate_dummy_data(
   n_cells = 150,
   sd_celltypes = 0.1,
@@ -111,30 +150,43 @@ d3 <- generate_dummy_data(
   n_individuals = 30,
   n_batchs = 4,
   interaction_feature = "visit",
-  time_points = 3,
+  time_points = time_points,
   test_var = "disease",
   prop_disease = 0.5,
-  fc_interact = 0.6,
-  interaction_type = "specific",
   seed = 2020,
-  visit_effects_progressor = c(0.00, 0.30, 0.60),
-  visit_effects_control    = c(0, 0, 0),
-  direction_by_cluster     = c(+1, -1, +1, -1)
+  effect_mat_progressor = E_prog,
+  effect_mat_control    = E_ctrl
 )
 
 obj3 <- scLASER(metadata = d3)
-
 plot_celltype_proportions(obj3)
+
+E_prog
+
+E_ctrl
 ```
 
 ---
 
 # 4. Five Time Points (Manual plotting by cell type)
 
-For ≥ 4 visits the code below uses **plain ggplot** to plot one panel **per cell type**:  
-light lines = individual subjects; bold line + points = group mean; ribbon = 95% CI.
-
 ```{r}
+time_points <- 5
+traj <- c(0.00, 0.30, 0.60, 0.20, 0.40)
+
+E_prog <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_ctrl <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_prog[c("A","I"), ] <- matrix(traj,  nrow = 2, ncol = time_points, byrow = TRUE)
+E_prog[c("B","J"), ] <- matrix(-traj, nrow = 2, ncol = time_points, byrow = TRUE)
+
 d5 <- generate_dummy_data(
   n_cells = 150,
   sd_celltypes = 0.1,
@@ -146,97 +198,24 @@ d5 <- generate_dummy_data(
   n_individuals = 30,
   n_batchs = 4,
   interaction_feature = "visit",
-  time_points = 5,
+  time_points = time_points,
   test_var = "disease",
   prop_disease = 0.5,
-  fc_interact = 0.6,
-  interaction_type = "specific",
   seed = 2020,
-  visit_effects_progressor = c(0.00, 0.30, 0.60, 0.20, 0.40),
-  visit_effects_control    = c(0, 0, 0, 0, 0),
-  direction_by_cluster     = c(+1, -1, +1, -1)
+  effect_mat_progressor = E_prog,
+  effect_mat_control    = E_ctrl
 )
 
 obj5 <- scLASER(metadata = d5)
-```
 
-## 4.1 Helper to compute per-cell-type proportions
+E_prog
 
-```{r}
-prep_prop_data <- function(obj, cell_type = "A") {
-  md <- obj@metadata
-  md$disease <- factor(md$disease, levels = c(0,1), labels = c("Control","Disease"))
-
-  totals <- md %>%
-    count(subject_id, visit, disease, name = "n_total")
-
-  ct_counts <- md %>%
-    dplyr::filter(cell_type == .env$cell_type) %>%
-    count(subject_id, visit, disease, name = "n_ct")
-
-  df <- totals %>%
-    left_join(ct_counts, by = c("subject_id","visit","disease")) %>%
-    mutate(n_ct = replace_na(n_ct, 0L),
-           prop = n_ct / n_total)
-
-  df_sum <- df %>%
-    group_by(disease, visit) %>%
-    summarise(
-      mean_prop = mean(prop, na.rm = TRUE),
-      se        = sd(prop, na.rm = TRUE) / sqrt(dplyr::n()),
-      ymin      = mean_prop - 1.96 * se,
-      ymax      = mean_prop + 1.96 * se,
-      .groups   = "drop"
-    )
-
-  list(indiv = df, summary = df_sum)
-}
-```
-
-## 4.2 Plot one cell type 
-
-```{r}
-plot_ct_manual <- function(obj, cell_type = "A") {
-  dd <- prep_prop_data(obj, cell_type = cell_type)
-  df <- dd$indiv
-  df_sum <- dd$summary
-
-  ggplot(df, aes(x = visit, y = prop, group = subject_id, color = disease)) +
-    geom_line(alpha = 0.25) +
-    geom_line(data = df_sum,
-              aes(x = visit, y = mean_prop, group = disease, color = disease),
-              linewidth = 1.2) +
-    geom_point(data = df_sum,
-               aes(x = visit, y = mean_prop, group = disease, color = disease),
-               size = 2) +
-    geom_ribbon(data = df_sum,
-                aes(x = visit, ymin = ymin, ymax = ymax, fill = disease),
-                alpha = 0.12, inherit.aes = FALSE, colour = NA) +
-    scale_x_continuous(breaks = sort(unique(df$visit))) +
-    labs(x = "Visit",
-         y = paste0("Proportion of cell type ", cell_type),
-         color = "Group", fill = "Group",
-         title = paste("Trajectory — Cell type", cell_type)) +
-    theme_bw() +
-    theme(panel.grid = element_blank(),
-          plot.title = element_text(face = "bold"))
-}
-```
-
-## 4.3 Plot all cell types (loop)
-
-```{r}
-cts <- sort(unique(obj5@metadata$cell_type))
-for (ct in cts) {
-  print(plot_ct_manual(obj5, cell_type = ct))
-}
+E_ctrl
 ```
 
 ---
 
 # 5. (Optional) Generate pseudo-PCs
-
-`generate_pseudo_pcs_time()` creates a synthetic PC matrix reflecting chosen sources of variation (cluster, batch, visit, interaction, etc.). This resembles real PC structure but with **known ground truth**, useful for method development.
 
 ```{r}
 pcs_matrix <- generate_pseudo_pcs_time(
@@ -272,4 +251,3 @@ pcs_matrix <- generate_pseudo_pcs_time(
 )
 dim(pcs_matrix)
 ```
-

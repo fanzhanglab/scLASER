@@ -36,16 +36,150 @@ knitr::opts_chunk$set(
 )
 ```
 
-
-
-
-
 ```{r}
 library(scLASER)
 library(dplyr)
+library(ggplot2)
 ```
 
+```{r helper-plot-top-nam, echo=TRUE}
 
+# Helper: pick the NAM PC with the smallest LRT p-value and plot it on UMAP
+plot_top_nam_pc_umap <- function(object,
+                                 p_col_candidates   = c("lrt_pval", "lrt_p", "p.value", "pval"),
+                                 nam_col_candidates = c("NAMscore", "nam_pc", "pc", "NAM_PC", "score"),
+                                 umap_col_candidates = list(
+                                   x = c("UMAP1", "umap_1", "UMAP_1", "Dim1"),
+                                   y = c("UMAP2", "umap_2", "UMAP_2", "Dim2")
+                                 ),
+                                 zscore = TRUE,
+                                 facet_by = "disease",
+                                 label_cell_types = TRUE,
+                                 cell_type_col = "cell_type",
+                                 label_size = 3) {
+
+  stopifnot(inherits(object, "scLASER"))
+
+  if (is.null(object@pipeline_output) || nrow(object@pipeline_output) == 0) {
+    stop("object@pipeline_output is empty. Run longAnalyses_plusModelSelection() first.")
+  }
+  if (is.null(object@umap) || nrow(object@umap) == 0) {
+    stop("object@umap is empty. Run compute_umap() first.")
+  }
+  if (is.null(object@nam_pcs) || nrow(object@nam_pcs) == 0) {
+    stop("object@nam_pcs is empty. Run association_nam_scLASER() first.")
+  }
+
+  # Require row alignment across slots
+  n_md  <- nrow(object@metadata)
+  n_um  <- nrow(object@umap)
+  n_nam <- nrow(object@nam_pcs)
+  if (!(n_md == n_um && n_md == n_nam)) {
+    stop(
+      "Row mismatch across slots:\n",
+      "  nrow(metadata) = ", n_md, "\n",
+      "  nrow(umap)     = ", n_um, "\n",
+      "  nrow(nam_pcs)  = ", n_nam, "\n",
+      "These must match if you want to cbind() them."
+    )
+  }
+
+  po <- object@pipeline_output
+
+  # Find p-value column
+  p_col <- p_col_candidates[p_col_candidates %in% colnames(po)][1]
+  if (is.na(p_col)) {
+    stop("Could not find an LRT p-value column in pipeline_output. Tried: ",
+         paste(p_col_candidates, collapse = ", "))
+  }
+
+  # Find NAM PC identifier column
+  nam_col <- nam_col_candidates[nam_col_candidates %in% colnames(po)][1]
+  if (is.na(nam_col)) {
+    stop("Could not find a NAM PC identifier column in pipeline_output. Tried: ",
+         paste(nam_col_candidates, collapse = ", "))
+  }
+
+  po[[p_col]] <- as.numeric(po[[p_col]])
+  po <- po[is.finite(po[[p_col]]), , drop = FALSE]
+  if (nrow(po) == 0) stop("No finite p-values in pipeline_output.")
+
+  top_row <- po[which.min(po[[p_col]]), , drop = FALSE]
+  top_pc  <- as.character(top_row[[nam_col]])
+
+  if (!top_pc %in% colnames(object@nam_pcs)) {
+    stop("Top NAM PC '", top_pc, "' not found in colnames(object@nam_pcs).")
+  }
+
+  # UMAP coordinate columns
+  um <- object@umap
+  um1 <- umap_col_candidates$x[umap_col_candidates$x %in% colnames(um)][1]
+  um2 <- umap_col_candidates$y[umap_col_candidates$y %in% colnames(um)][1]
+  if (is.na(um1) || is.na(um2)) {
+    stop("Could not find UMAP coordinate columns in object@umap.")
+  }
+
+  # Build plotting DF by row alignment
+  plot_df <- cbind(object@metadata, object@umap)
+  plot_df$nam_score <- as.numeric(object@nam_pcs[, top_pc])
+
+  if (zscore) {
+    plot_df$nam_score <- as.numeric(scale(plot_df$nam_score))
+  }
+
+  p <- ggplot2::ggplot(
+    plot_df,
+    ggplot2::aes(x = .data[[um1]], y = .data[[um2]], color = nam_score)
+  ) +
+    ggplot2::geom_point(size = 0.6, alpha = 0.85) +
+    ggplot2::scale_color_gradient2(
+      low = "#2C7BB6",   # blue
+      mid = "white",
+      high = "#D7191C",  # red
+      midpoint = 0
+    ) +
+    ggplot2::labs(
+      title = paste0("Top NAM PC on UMAP: ", top_pc),
+      subtitle = paste0("min LRT p = ", signif(top_row[[p_col]], 3)),
+      x = "UMAP1",
+      y = "UMAP2",
+      color = if (zscore) paste0(top_pc, " (z)") else top_pc
+    ) +
+    ggplot2::theme_classic()
+
+  # Facet (optional)
+  if (!is.null(facet_by) && facet_by %in% colnames(plot_df)) {
+    p <- p + ggplot2::facet_wrap(stats::as.formula(paste("~", facet_by)), nrow = 1)
+  }
+
+  # Add one label per cell type at median UMAP position
+  if (isTRUE(label_cell_types)) {
+    if (!cell_type_col %in% colnames(plot_df)) {
+      stop("cell_type_col '", cell_type_col, "' not found in metadata/plot_df.")
+    }
+
+    label_df <- plot_df %>%
+      dplyr::group_by(.data[[cell_type_col]]) %>%
+      dplyr::summarise(
+        .x = stats::median(.data[[um1]], na.rm = TRUE),
+        .y = stats::median(.data[[um2]], na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
+      dplyr::rename(label = !!cell_type_col)
+
+    p <- p +
+      ggplot2::geom_text(
+        data = label_df,
+        ggplot2::aes(x = .x, y = .y, label = label),
+        inherit.aes = FALSE,
+        size = label_size
+      )
+  }
+
+  p
+}
+
+```
 
 ---
 
@@ -54,6 +188,29 @@ library(dplyr)
 ## A1. Simulate 2TP data
 
 ```{r}
+cell_types  <- LETTERS[1:(5 + 2)]  # A-G (5 major + 2 minor)
+time_points <- 2                   # V0, V1
+
+E_prog <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_ctrl <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+# Interacting cell types in this setup:
+# majors: first 2 => A, B
+# minors: last 1  => G
+# (so A, B, G are the interacting ones)
+E_prog["A", ] <- c(+0.20, -0.20)
+E_prog["B", ] <- c(-0.20, -0.05)  # opposite direction vs A
+E_prog["G", ] <- c(+0.20, -0.20)
+
+# Controls remain stable (all zeros) via E_ctrl
+
 d2 <- generate_dummy_data(
   n_cells = 800,
   sd_celltypes = 0.15,
@@ -70,18 +227,13 @@ d2 <- generate_dummy_data(
   test_var = "disease",
   prop_disease = 0.5,
 
-  fc_interact = 0.20,
-  interaction_type = "specific",
+  fc_interact = 0.20,               # ignored when effect matrices provided
+  interaction_type = "specific",    # ignored when effect matrices provided
   seed = 2025,
 
-  # explicit visit effects for 2TP
-  visit_effects_progressor = c(0.2, -0.2),
-  visit_effects_control    = c(0.0, 0.0),
-
-  # direction for interacting clusters
-  direction_by_cluster = c(+1, -1, +1)
+  effect_mat_progressor = E_prog,
+  effect_mat_control    = E_ctrl
 )
-
 dplyr::glimpse(d2)
 ```
 
@@ -120,7 +272,6 @@ pcs2 <-  generate_pseudo_pcs_time(
   disease_col = "disease",
   visit_col = "visit",
    
-
   seed = 1234
 )
 dim(pcs2)
@@ -131,10 +282,21 @@ dim(pcs2)
 ```{r}
 obj2 <- scLASER(metadata = d2, pcs = pcs2)
 
-# Proportion plots (auto-handles V0, V1)
+obj2
 plot_celltype_proportions(obj2)
-
 ```
+
+### What lives in a scLASER object (slots)
+
+A `scLASER` object is an S4 container that stores each intermediate output of the pipeline in a dedicated **slot**, so later steps can reuse results without recomputing them. In this tutorial we populate the slots in the following order:
+
+- `@metadata` — per-cell metadata (sample/subject IDs, visit, disease, covariates, etc.). Created by `generate_dummy_data()` and passed into `scLASER()`.
+- `@pcs` — synthetic principal components used as the working low-dimensional space. Created by `generate_pseudo_pcs_time()` and stored when you call `scLASER(metadata=..., pcs=...)`.
+- `@umap` — 2D UMAP embedding for visualization. Created by `compute_umap()`.
+- `@harmony` — batch-corrected PC embedding. Created by `run_harmony()`.
+- `@nam_pcs` — neighborhood abundance “PCs” (association score vectors). Created by `association_nam_scLASER()`.
+- `@NAM_matrix` — neighborhood abundance matrix used to derive `@nam_pcs` (also created by `association_nam_scLASER()`).
+- `@pipeline_output` — tidy results table from longitudinal model selection (including LRT p-values). Created by `longAnalyses_plusModelSelection()`.
 
 ## A4. UMAP & Harmony (2TP)
 
@@ -148,7 +310,7 @@ obj2 <- run_harmony(
   epsilon.cluster = -Inf,
   epsilon.harmony = -Inf,
   max.iter.cluster = 30,
-  max.iter.harmony = 10,
+  max.iter.harmony = 1,
   plot_convergence = FALSE
 )
 ```
@@ -157,23 +319,23 @@ obj2 <- run_harmony(
 
 The following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of disease and visit.
 
-
 ```{r}
+
+
+obj2@metadata$disease = as.numeric(obj2@metadata$disease)
 obj2 <- association_nam_scLASER(
-  object = obj2,
-  test_var = "test_var_cna",
-  samplem_key = "subject_id",
+  obj = obj2,
+  test_var = "disease",
+  samplem_key = "sample_id",
   graph_use = "RNA_nn",
   batches = "batch",
   covs = c("age", "sex"),
   Nnull = 1000,
-  local_test = TRUE,
-  seed = 1234
+  local_test = TRUE,n_pcs = 20,
+  seed = 1234, return_nam = T, key = "NAM_"
 )
 
-# Output is a matrix
-
-# Align names for longitudinal analysis
+# Align names for longitudinal analysis + plotting
 rownames(obj2@nam_pcs) <- obj2@metadata$sample_id
 
 obj2 <- longAnalyses_plusModelSelection(
@@ -187,6 +349,7 @@ obj2 <- longAnalyses_plusModelSelection(
 
 obj2@pipeline_output
 
+plot_top_nam_pc_umap(obj2, facet_by = NULL)
 ```
 
 ---
@@ -196,6 +359,27 @@ obj2@pipeline_output
 ## B1. Simulate 3TP data
 
 ```{r}
+cell_types  <- LETTERS[1:(2 + 1)]  # A-G (5 major + 2 minor)
+time_points <- 3                   # V0, V1, V2
+
+E_prog <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+E_ctrl <- matrix(
+  0, nrow = length(cell_types), ncol = time_points,
+  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+)
+
+
+
+
+E_prog["A", ] <- c(+0.20, -0.10, +0.10)  
+E_prog["B", ] <- c(-0.20, -0.10, -0.10)  
+E_prog["G", ] <- c(+0.20, -0.10, +0.10)  
+
+
 d3 <- generate_dummy_data(
   n_cells = 800,
   sd_celltypes = 0.15,
@@ -212,16 +396,14 @@ d3 <- generate_dummy_data(
   test_var = "disease",
   prop_disease = 0.5,
 
-  fc_interact = 0.20,
-  interaction_type = "specific",
+  fc_interact = 0.20,               # ignored when effect matrices provided
+  interaction_type = "specific",    # ignored when effect matrices provided
   seed = 2025,
 
-  # explicit visit effects for 3TP
-  visit_effects_progressor = c(0.2, -0.1, 0.1),
-  visit_effects_control    = c(0.0, 0.0, 0.0),
-
-  direction_by_cluster = c(+1, -1, +1)
+  effect_mat_progressor = E_prog,
+  effect_mat_control    = E_ctrl
 )
+
 
 dplyr::count(d3, visit)
 ```
@@ -229,7 +411,7 @@ dplyr::count(d3, visit)
 ## B2. Generate pseudo-PCs (3TP)
 
 ```{r}
-pcs3 <- pcs_matrix <- generate_pseudo_pcs_time(
+pcs3 <- generate_pseudo_pcs_time(
   d3,                      
   n_pcs = 20,
   cluster_pcs = 1:20,
@@ -271,8 +453,7 @@ dim(pcs3)
 obj3 <- scLASER(metadata = d3, pcs = pcs3)
 
 plot_celltype_proportions(obj3)
-
-
+obj3
 ```
 
 ## B4. UMAP & Harmony (3TP)
@@ -287,7 +468,7 @@ obj3 <- run_harmony(
   epsilon.cluster = -Inf,
   epsilon.harmony = -Inf,
   max.iter.cluster = 30,
-  max.iter.harmony = 10,
+  max.iter.harmony = 1,
   plot_convergence = FALSE
 )
 ```
@@ -297,16 +478,17 @@ obj3 <- run_harmony(
 As same as the section A5 in this tutorial, the following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline used in this example. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of disease and visit.
 
 ```{r}
+obj3@metadata$disease = as.numeric(obj3@metadata$disease)
 obj3 <- association_nam_scLASER(
-  object = obj3,
-  test_var = "test_var_cna",
-  samplem_key = "subject_id",
+  obj = obj3,
+  test_var = "disease",
+  samplem_key = "sample_id",
   graph_use = "RNA_nn",
   batches = "batch",
   covs = c("age", "sex"),
   Nnull = 1000,
-  local_test = TRUE,
-  seed = 1234
+  local_test = TRUE,n_pcs = 20,
+  seed = 1234, return_nam = T, key = "NAM_"
 )
 
 rownames(obj3@nam_pcs) <- obj3@metadata$sample_id
@@ -321,5 +503,7 @@ obj3 <- longAnalyses_plusModelSelection(
 )
 
 obj3@pipeline_output
-```
 
+plot_top_nam_pc_umap(obj3, facet_by = NULL)
+
+```
