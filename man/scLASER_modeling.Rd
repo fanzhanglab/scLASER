@@ -4,7 +4,14 @@
 \alias{scLASER_modeling}
 \title{Title}
 \usage{
-scLASER_modeling(object)
+scLASER_modeling(
+  object,
+  disease_var = "disease",
+  time_var = "visit",
+  covariates = c("age", "sex"),
+  subject_var = "subject_id",
+  sample_var = "sample_id"
+)
 }
 \arguments{
 \item{object}{}
