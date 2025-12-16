@@ -1,5 +1,5 @@
 ---
-title: "scLASER Longitudinal Pipeline: 2 Time Points then 3 Time Points"
+title: "scLASER Longitudinal Pipeline: 3 Time points"
 author: |
   fanzhang labs  
   [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
@@ -20,7 +20,7 @@ output:
       heading_font: {google: "Inter"}
       code_font: {google: "Fira Code"}
 vignette: >
-  %\VignetteIndexEntry{scLASER Pipeline: 2TP then 3TP}
+  %\VignetteIndexEntry{scLASER Pipeline}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -38,7 +38,6 @@ knitr::opts_chunk$set(
 
 ```{r}
 library(scLASER)
-library(dplyr)
 library(ggplot2)
 ```
 
@@ -181,11 +180,9 @@ plot_top_nam_pc_umap <- function(object,
 
 ```
 
----
+------------------------------------------------------------------------
 
-# Part A — Pipeline with **2 Time Points** (V0, V1)
-
-## A1. Simulate 2TP data
+## A1. Simulate data
 
 ```{r}
 cell_types  <- LETTERS[1:(5 + 2)]  # A-G (5 major + 2 minor)
@@ -237,7 +234,7 @@ d2 <- generate_dummy_data(
 dplyr::glimpse(d2)
 ```
 
-## A2. Generate pseudo-PCs (2TP)
+## A2. Generate pseudo-PCs
 
 ```{r}
 pcs2 <-  generate_pseudo_pcs_time(
@@ -277,7 +274,7 @@ pcs2 <-  generate_pseudo_pcs_time(
 dim(pcs2)
 ```
 
-## A3. Create object, visualize proportions (2TP)
+## A3. Create object, visualize proportions
 
 ```{r}
 obj2 <- scLASER(metadata = d2, pcs = pcs2)
@@ -290,15 +287,15 @@ plot_celltype_proportions(obj2)
 
 A `scLASER` object is an S4 container that stores each intermediate output of the pipeline in a dedicated **slot**, so later steps can reuse results without recomputing them. In this tutorial we populate the slots in the following order:
 
-- `@metadata` — per-cell metadata (sample/subject IDs, visit, disease, covariates, etc.). Created by `generate_dummy_data()` and passed into `scLASER()`.
-- `@pcs` — synthetic principal components used as the working low-dimensional space. Created by `generate_pseudo_pcs_time()` and stored when you call `scLASER(metadata=..., pcs=...)`.
-- `@umap` — 2D UMAP embedding for visualization. Created by `compute_umap()`.
-- `@harmony` — batch-corrected PC embedding. Created by `run_harmony()`.
-- `@nam_pcs` — neighborhood abundance “PCs” (association score vectors). Created by `association_nam_scLASER()`.
-- `@NAM_matrix` — neighborhood abundance matrix used to derive `@nam_pcs` (also created by `association_nam_scLASER()`).
-- `@pipeline_output` — tidy results table from longitudinal model selection (including LRT p-values). Created by `longAnalyses_plusModelSelection()`.
+-   `@metadata` — per-cell metadata (sample/subject IDs, visit, disease, covariates, etc.). Created by `generate_dummy_data()` and passed into `scLASER()`.
+-   `@pcs` — synthetic principal components used as the working low-dimensional space. Created by `generate_pseudo_pcs_time()` and stored when you call `scLASER(metadata=..., pcs=...)`.
+-   `@umap` — 2D UMAP embedding for visualization. Created by `compute_umap()`.
+-   `@harmony` — batch-corrected PC embedding. Created by `run_harmony()`.
+-   `@nam_pcs` — neighborhood abundance “PCs” (association score vectors). Created by `association_nam_scLASER()`.
+-   `@NAM_matrix` — neighborhood abundance matrix used to derive `@nam_pcs` (also created by `association_nam_scLASER()`).
+-   `@pipeline_output` — tidy results table from longitudinal model selection (including LRT p-values). Created by `longAnalyses_plusModelSelection()`.
 
-## A4. UMAP & Harmony (2TP)
+## A4. UMAP & Harmony
 
 ```{r}
 obj2 <- compute_umap(obj2, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
@@ -315,7 +312,7 @@ obj2 <- run_harmony(
 )
 ```
 
-## A5. Association & Longitudinal modeling (2TP)
+## A5. Association & Longitudinal modeling 
 
 The following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of disease and visit.
 
@@ -350,160 +347,4 @@ obj2 <- longAnalyses_plusModelSelection(
 obj2@pipeline_output
 
 plot_top_nam_pc_umap(obj2, facet_by = NULL)
-```
-
----
-
-# Part B — Pipeline with **3 Time Points** (V0, V1, V2)
-
-## B1. Simulate 3TP data
-
-```{r}
-cell_types  <- LETTERS[1:(5 + 2)]  # A-G (5 major + 2 minor)
-time_points <- 3                   # V0, V1, V2
-
-E_prog <- matrix(
-  0, nrow = length(cell_types), ncol = time_points,
-  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
-)
-
-E_ctrl <- matrix(
-  0, nrow = length(cell_types), ncol = time_points,
-  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
-)
-
-
-
-
-E_prog["A", ] <- c(+0.20, -0.10, +0.10)  
-E_prog["B", ] <- c(-0.20, -0.10, -0.10)  
-E_prog["G", ] <- c(+0.20, -0.10, +0.10)  
-
-
-d3 <- generate_dummy_data(
-  n_cells = 800,
-  sd_celltypes = 0.15,
-  n_major_cell_types = 5,
-  n_minor_cell_types = 2,
-  relative_abundance = 0.25,
-  n_major_interact_celltypes = 2,
-  n_minor_interact_celltypes = 1,
-  n_individuals = 20,
-  n_batchs = 3,
-
-  interaction_feature = "visit",
-  time_points = 3,
-  test_var = "disease",
-  prop_disease = 0.5,
-
-  fc_interact = 0.20,               # ignored when effect matrices provided
-  interaction_type = "specific",    # ignored when effect matrices provided
-  seed = 2025,
-
-  effect_mat_progressor = E_prog,
-  effect_mat_control    = E_ctrl
-)
-
-
-dplyr::count(d3, visit)
-```
-
-## B2. Generate pseudo-PCs (3TP)
-
-```{r}
-pcs3 <- generate_pseudo_pcs_time(
-  d3,                      
-  n_pcs = 20,
-  cluster_pcs = 1:20,
-  disease_pcs = 0,
-  sex_pcs = 0,
-  age_pcs = 0,
-  bmi_pcs = 0,
-  batch_pcs = 0,
-  interaction_pcs = 0,
-  visit_pcs = 0,
-  subject_pcs = 0,
-
-  cluster_ratio = 0.8,
-  disease_ratio = 0,
-  sex_ratio = 0,
-  age_ratio = 0,
-  bmi_ratio = 0,
-  batch_ratio = 0,
-  interaction_ratio = 0,
-  visit_ratio = 0,
-  subject_ratio = 0,
-
-  scale_factor = 5,
-  cluster_col = "cell_type",
-  sex_col = "sex",
-  age_col = "age",
-  bmi_col = "bmi",
-  batch_col = "batch",
-  disease_col = "disease",
-  visit_col = "visit",
-  seed = 1234
-)
-dim(pcs3)
-```
-
-## B3. Create object, visualize proportions (3TP)
-
-```{r}
-obj3 <- scLASER(metadata = d3, pcs = pcs3)
-
-plot_celltype_proportions(obj3)
-obj3
-```
-
-## B4. UMAP & Harmony (3TP)
-
-```{r}
-obj3 <- compute_umap(obj3, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
-
-obj3 <- run_harmony(
-  obj3,
-  batch_col = "sample_id",
-  theta = 2,
-  epsilon.cluster = -Inf,
-  epsilon.harmony = -Inf,
-  max.iter.cluster = 30,
-  max.iter.harmony = 1,
-  plot_convergence = FALSE
-)
-```
-
-## B5. Association & Longitudinal modeling (3TP)
-
-As same as the section A5 in this tutorial, the following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline used in this example. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of disease and visit.
-
-```{r}
-obj3@metadata$disease = as.numeric(obj3@metadata$disease)
-obj3 <- association_nam_scLASER(
-  obj = obj3,
-  test_var = "disease",
-  samplem_key = "sample_id",
-  graph_use = "RNA_nn",
-  batches = "batch",
-  covs = c("age", "sex"),
-  Nnull = 1000,
-  local_test = TRUE,n_pcs = 20,
-  seed = 1234, return_nam = T, key = "NAM_"
-)
-
-rownames(obj3@nam_pcs) <- obj3@metadata$sample_id
-
-obj3 <- longAnalyses_plusModelSelection(
-  obj3,
-  disease_var = "disease",
-  subject_var = "subject_id",
-  sample_var  = "sample_id",
-  time_var    = "visit",
-  covariates  = c("age", "sex")
-)
-
-obj3@pipeline_output
-
-plot_top_nam_pc_umap(obj3, facet_by = NULL)
-
 ```
