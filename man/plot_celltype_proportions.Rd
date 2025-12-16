@@ -19,8 +19,3 @@ A ggplot object (invisibly)
 \description{
 Plot cell type proportions across visits
 }
-\examples{
-plot_celltype_proportions(obj)  # defaults (A,B,I,J starred)
-plot_celltype_proportions(obj, highlight_cell_types = c("C","D"))
-plot_celltype_proportions(obj, highlight_cell_types = NULL)
-}
