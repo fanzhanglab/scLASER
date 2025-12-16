@@ -54,8 +54,8 @@ devtools::install_github("fanzhanglab/scLASER")
 
 ## Tutorials
 
-- [scLASER Pipeline tutorial](vignettes/Simulated_data_pipeline.html)
-- [Data simulation](vignettes/Data_simulation.html)
+- [scLASER longitudinal data analytical tutorial](vignettes/Simulated_data_pipeline.html)
+- [scLASER longitudinal data simulation tutorial](vignettes/Data_simulation.html)
 
 
 
