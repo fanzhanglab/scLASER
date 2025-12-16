@@ -10,7 +10,8 @@
 <img src="scLASER_hex_cropped.png" align="right" width="220" alt="scLASER logo"/>
 
 <p style="font-size: 18px; line-height: 1.6;">
-Longitudinal single-cell studies enable tracking within-person dynamics over time, but lack robust methods for modeling temporal cell phenotype changes and estimating statistical power. Here we present <b>scLASER</b>, a unified framework that detects time-dependent cellular neighborhood dynamics and simulates realistic longitudinal datasets for power estimation. scLASER achieves superior sensitivity compared to frequency-based tests (97.5% vs 94.4%), with pronounced gains for rare cell types (96.7% vs 88.8%). In inflammatory bowel disease and COVID-19, scLASER revealed novel cellular dynamics: NOTCH3+ stromal neighborhoods with treatment dependent trajectories and orthogonal axes, including T cell activation, cytotoxicity, and interferon signaling, distinguishing disease progressors. scLASER enables rigorous longitudinal single-cell analysis and principled study design optimization.
+Longitudinal single-cell clinical studies enable tracking within-individual cellular dynamics, but methods for modeling temporal phenotypic changes and estimating power remain limited. We present scLASER, a framework detecting time-dependent cellular neighborhood dynamics and simulating longitudinal single-cell datasets for power estimation. Across benchmarks, scLASER shows superior sensitivity, particularly for non-linear temporal patterns. Applications to inflammatory bowel disease reveal treatment-responsive NOTCH3+ stromal trajectories, while analysis of COVID-19 data identifies distinct axes of T cell activity over disease progression. scLASER enables robust longitudinal single-cell analysis and optimization of study design.
+
 </p>
 
 <br/>
