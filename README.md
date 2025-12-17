@@ -28,7 +28,7 @@ devtools::install_github("fanzhanglab/scLASER")
 
 <br/>
 
-### Dependencies / Other required packages
+### Dependencies
 
 ```r
 - R (>= 4.1.0)
