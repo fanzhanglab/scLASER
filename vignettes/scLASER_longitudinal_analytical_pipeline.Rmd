@@ -1,7 +1,6 @@
 ---
-title: "scLASER Longitudinal Pipeline: 3 Time points"
+title: "Tutorial: applying scLASER to identify time-dependent cell dynamics on simulated three-timepoints single-cell data"
 author: |
-  fanzhang labs  
   [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
   [Lab GitHub - https://github.com/fanzhanglab](https://github.com/fanzhanglab)
 date: "`r format(Sys.Date())`"
@@ -10,7 +9,6 @@ output:
     toc: true
     toc_float: true
     toc_depth: 3
-    number_sections: true
     code_folding: show
     theme:
       version: 5
@@ -38,10 +36,12 @@ knitr::opts_chunk$set(
 
 ```{r}
 library(scLASER)
-library(ggplot2)
+library(tidyverse)
+
 ```
 
 ```{r helper-plot-top-nam, echo=TRUE}
+
 
 # Helper: pick the NAM PC with the smallest LRT p-value and plot it on UMAP
 plot_top_nam_pc_umap <- function(object,
@@ -138,7 +138,7 @@ plot_top_nam_pc_umap <- function(object,
       midpoint = 0
     ) +
     ggplot2::labs(
-      title = paste0("Top NAM PC on UMAP: ", top_pc),
+      title = "Association Score (significant latent embedding, PC1)",
       subtitle = paste0("min LRT p = ", signif(top_row[[p_col]], 3)),
       x = "UMAP1",
       y = "UMAP2",
@@ -182,105 +182,20 @@ plot_top_nam_pc_umap <- function(object,
 
 ------------------------------------------------------------------------
 
-## A1. Simulate data
+
+
+## A. Create an object for the single-cell data. The simulated cell abundances are visualized accordingly based on clinical outcome status
 
 ```{r}
-cell_types  <- LETTERS[1:(5 + 2)]  # A-G (5 major + 2 minor)
-time_points <- 2                   # V0, V1
+obj <- scLASER(metadata = readRDS("C:\\Users\\Juan\\Documents\\GitHub\\scLASER\\sim_data_lv.rds"), pcs = readRDS("C:\\Users\\Juan\\Documents\\GitHub\\scLASER\\sim_pcs_lv.rds"))
 
-E_prog <- matrix(
-  0, nrow = length(cell_types), ncol = time_points,
-  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
+obj
+plot_celltype_proportions(
+  obj,
+  disease_var = "disease",
+  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
+  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
 )
-
-E_ctrl <- matrix(
-  0, nrow = length(cell_types), ncol = time_points,
-  dimnames = list(cell_types, paste0("V", 0:(time_points - 1)))
-)
-
-# Interacting cell types in this setup:
-# majors: first 2 => A, B
-# minors: last 1  => G
-# (so A, B, G are the interacting ones)
-E_prog["A", ] <- c(+0.20, -0.20)
-E_prog["B", ] <- c(-0.20, -0.05)  # opposite direction vs A
-E_prog["G", ] <- c(+0.20, -0.20)
-
-# Controls remain stable (all zeros) via E_ctrl
-
-d2 <- generate_dummy_data(
-  n_cells = 800,
-  sd_celltypes = 0.15,
-  n_major_cell_types = 5,
-  n_minor_cell_types = 2,
-  relative_abundance = 0.25,
-  n_major_interact_celltypes = 2,
-  n_minor_interact_celltypes = 1,
-  n_individuals = 20,
-  n_batchs = 3,
-
-  interaction_feature = "visit",
-  time_points = 2,
-  test_var = "disease",
-  prop_disease = 0.5,
-
-  fc_interact = 0.20,               # ignored when effect matrices provided
-  interaction_type = "specific",    # ignored when effect matrices provided
-  seed = 2025,
-
-  effect_mat_progressor = E_prog,
-  effect_mat_control    = E_ctrl
-)
-dplyr::glimpse(d2)
-```
-
-## A2. Generate pseudo-PCs
-
-```{r}
-pcs2 <-  generate_pseudo_pcs_time(
-  d2,                      
-  n_pcs = 20,
-  cluster_pcs = 1:20,
-  disease_pcs = 0,
-  sex_pcs = 0,
-  age_pcs = 0,
-  bmi_pcs = 0,
-  batch_pcs = 0,
-  interaction_pcs = 0,
-  visit_pcs = 0,
-  subject_pcs = 0,
-
-  cluster_ratio = 0.8,
-  disease_ratio = 0,
-  sex_ratio = 0,
-  age_ratio = 0,
-  bmi_ratio = 0,
-  batch_ratio = 0,
-  interaction_ratio = 0,
-  visit_ratio = 0,
-  subject_ratio = 0,
-
-  scale_factor = 5,
-  cluster_col = "cell_type",
-  sex_col = "sex",
-  age_col = "age",
-  bmi_col = "bmi",
-  batch_col = "batch",
-  disease_col = "disease",
-  visit_col = "visit",
-   
-  seed = 1234
-)
-dim(pcs2)
-```
-
-## A3. Create object, visualize proportions
-
-```{r}
-obj2 <- scLASER(metadata = d2, pcs = pcs2)
-
-obj2
-plot_celltype_proportions(obj2)
 ```
 
 ### What lives in a scLASER object (slots)
@@ -295,33 +210,36 @@ A `scLASER` object is an S4 container that stores each intermediate output of th
 -   `@NAM_matrix` — neighborhood abundance matrix used to derive `@nam_pcs` (also created by `association_nam_scLASER()`).
 -   `@pipeline_output` — tidy results table from longitudinal model selection (including LRT p-values). Created by `longAnalyses_plusModelSelection()`.
 
-## A4. UMAP & Harmony
+## B. Visualizing data in UMAP, with data harmonized across samples
 
 ```{r}
-obj2 <- compute_umap(obj2, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
+obj <- compute_umap(obj, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
 
-obj2 <- run_harmony(
-  obj2,
+obj <- run_harmony(
+  obj,
   batch_col = "sample_id",
   theta = 2,
   epsilon.cluster = -Inf,
   epsilon.harmony = -Inf,
   max.iter.cluster = 30,
-  max.iter.harmony = 1,
+  max.iter.harmony = 10,
   plot_convergence = FALSE
 )
+
+saveRDS(obj, "obj_scLASER.rds")
 ```
 
-## A5. Association & Longitudinal modeling 
+## C. Running main functions for longitudinal association modeling
 
-The following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of disease and visit.
+The following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of response status and visit.
 
 ```{r}
 
+obj = readRDS("obj_scLASER.rds")
 
-obj2@metadata$disease = as.numeric(obj2@metadata$disease)
-obj2 <- association_nam_scLASER(
-  obj = obj2,
+obj@metadata$disease = as.numeric(obj@metadata$disease)
+obj <- association_nam_scLASER(
+  obj = obj,
   test_var = "disease",
   samplem_key = "sample_id",
   graph_use = "RNA_nn",
@@ -333,18 +251,22 @@ obj2 <- association_nam_scLASER(
 )
 
 # Align names for longitudinal analysis + plotting
-rownames(obj2@nam_pcs) <- obj2@metadata$sample_id
+rownames(obj@nam_pcs) <- obj@metadata$sample_id
 
-obj2 <- longAnalyses_plusModelSelection(
-  obj2,
+obj <- scLASER_modeling(obj,
   disease_var = "disease",
-  subject_var = "subject_id",
-  sample_var  = "sample_id",
   time_var    = "visit",
-  covariates  = c("age", "sex")
+  covariates  = c("age", "sex"),
+  subject_var = "subject_id",
+  sample_var  = "sample_id"
 )
 
-obj2@pipeline_output
 
-plot_top_nam_pc_umap(obj2, facet_by = NULL)
+obj@pipeline_output
+
+plot_top_nam_pc_umap(obj, facet_by = NULL,zscore = F )
+
+
+saveRDS(obj, "obj_scLASER.rds")
 ```
+

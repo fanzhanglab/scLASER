@@ -1,5 +1,5 @@
 ---
-title: "scLASER • Data Simulation (2, 3, and 5 Time Points)"
+title: "Tutorial: using scLASER to simulate longitudinal single-cell data with clinical outcome association (e.g., treatment response)"
 author: |
   fanzhang labs  
   [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
@@ -10,7 +10,6 @@ output:
     toc: true
     toc_float: true
     toc_depth: 3
-    number_sections: true
     code_folding: show
     theme:
       version: 5
@@ -25,9 +24,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-> This vignette covers **data simulation only** and **cell-type proportion plots**.  
-> • For **≤ 3 time points**, use `plot_celltype_proportions()` (built-in).  
-> • For **≥ 4 time points**, we show **plain ggplot code** to plot **by cell type**.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
@@ -47,7 +43,7 @@ library(tidyr)
 library(ggplot2)
 ```
 
-# 1. How longitudinal effects control the simulation
+# 1.  Simulate a scenario that captures the longitudinal evolution of interacting cell types across visits and their divergence between groups.
 
 Longitudinal changes in cell-type abundance are specified using **effect design matrices** that explicitly encode how each cell type evolves across visits and differs between groups.
 
@@ -67,7 +63,7 @@ Two matrices are provided:
 
 ---
 
-# 2. Two Time Points (V0, V1)
+# 2. Simulate a two-timepoint case consisting of baseline (V0) and follow-up (V1
 
 ```{r}
 cell_types  <- LETTERS[1:(7 + 3)]  # A-J
@@ -109,8 +105,12 @@ d2 <- generate_dummy_data(
 )
 
 obj2 <- scLASER(metadata = d2)
-plot_celltype_proportions(obj2)
-
+plot_celltype_proportions(
+  obj2,
+  disease_var = "disease",
+  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
+  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
+)
 
 E_prog
 
@@ -119,7 +119,8 @@ E_ctrl
 
 ---
 
-# 3. Three Time Points (V0, V1, V2)
+# 3. Simulate a three-timepoint case (V0, V1, V2)
+
 
 ```{r}
 time_points <- 3
@@ -159,8 +160,12 @@ d3 <- generate_dummy_data(
 )
 
 obj3 <- scLASER(metadata = d3)
-plot_celltype_proportions(obj3)
-
+plot_celltype_proportions(
+  obj3,
+  disease_var = "disease",
+  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
+  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
+)
 E_prog
 
 E_ctrl
@@ -168,7 +173,7 @@ E_ctrl
 
 ---
 
-# 4. Five Time Points (Manual plotting by cell type)
+# 4. Simulate a five-timepoint case 
 
 ```{r}
 time_points <- 5
@@ -211,6 +216,13 @@ obj5 <- scLASER(metadata = d5)
 E_prog
 
 E_ctrl
+
+plot_celltype_proportions(
+  obj5,
+  disease_var = "disease",
+  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
+  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
+)
 ```
 
 ---
