@@ -26,6 +26,7 @@ Longitudinal single-cell clinical studies enable tracking within-individual cell
 
 
 <br/>
+
 ## Installation
 
 To install the latest development version directly from GitHub:
