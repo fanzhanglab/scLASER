@@ -16,6 +16,15 @@ Longitudinal single-cell clinical studies enable tracking within-individual cell
 
 <br/>
 
+<img width="100%" align="center" src="https://github.com/fanzhanglab/scLAER/blob/main/docs/figure.png?raw=true">
+
+> **Figure 1.** Simulate multiple timepoint longitudinal single-cell data, with distinct patterns between treatment responders vs non-responders  
+> - Detect time-dependent cell dynamics and phenotypes associated with response status  
+> - Generate an association score per individual cell reflecting contribution to time × clinical outcome  
+> - Validate cell-type classification performance for predicting time × response effects
+
+
+<br/>
 ## Installation
 
 To install the latest development version directly from GitHub:
