@@ -16,7 +16,7 @@ Longitudinal single-cell clinical studies enable tracking within-individual cell
 
 <br/>
 
-<img width="100%" align="center" src="https://github.com/fanzhanglab/scLAER/blob/main/docs/figure.png?raw=true">
+<img width="100%" align="center" src="https://github.com/fanzhanglab/scLAER/docs/figure.png?raw=true">
 
 > **Figure 1.** Simulate multiple timepoint longitudinal single-cell data, with distinct patterns between treatment responders vs non-responders  
 > - Detect time-dependent cell dynamics and phenotypes associated with response status  
