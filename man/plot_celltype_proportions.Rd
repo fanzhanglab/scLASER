@@ -4,7 +4,13 @@
 \alias{plot_celltype_proportions}
 \title{Plot cell type proportions across visits}
 \usage{
-plot_celltype_proportions(object, highlight_cell_types = c("A", "B", "I", "J"))
+plot_celltype_proportions(
+  object,
+  highlight_cell_types = c("A", "B", "I", "J"),
+  disease_var = "disease",
+  disease_labels = c(`0` = "Non-converter", `1` = "Converter"),
+  disease_colors = c(`Non-converter` = "#4DAF4A", Converter = "#984EA3")
+)
 }
 \arguments{
 \item{object}{scLASER object}
@@ -12,6 +18,14 @@ plot_celltype_proportions(object, highlight_cell_types = c("A", "B", "I", "J"))
 \item{highlight_cell_types}{Optional character vector of cell type names
 to mark with an asterisk (e.g., interacting / changing types). Default:
 c("A", "B", "I", "J"). Set to NULL to disable highlighting.}
+
+\item{disease_var}{Column name in metadata encoding disease status}
+
+\item{disease_labels}{Named character vector mapping disease values to labels
+(e.g., c("0" = "Non-converter", "1" = "Converter"))}
+
+\item{disease_colors}{Named character vector mapping *labels* (not codes)
+to colors. Names must match the values produced by `disease_labels`.}
 }
 \value{
 A ggplot object (invisibly)
