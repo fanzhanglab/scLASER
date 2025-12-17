@@ -1,12 +1,11 @@
 ---
-title: "Tutorial: applying scLASER to identify time-dependent cell dynamics on simulated three-timepoints single-cell data"
+title: "<span style='font-size: 30px;'>Tutorial: applying scLASER to identify time-dependent cell dynamics on simulated three-timepoints single-cell data</span>"
 author: |
   [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
   [Lab GitHub - https://github.com/fanzhanglab](https://github.com/fanzhanglab)
 date: "`r format(Sys.Date())`"
 output:
   rmarkdown::html_document:
-    toc: true
     toc_float: true
     toc_depth: 3
     code_folding: show
@@ -39,6 +38,7 @@ library(scLASER)
 library(tidyverse)
 
 ```
+
 
 ```{r helper-plot-top-nam, echo=TRUE}
 
@@ -184,21 +184,24 @@ plot_top_nam_pc_umap <- function(object,
 
 
 
-## A. Create an object for the single-cell data. The simulated cell abundances are visualized accordingly based on clinical outcome status
+### <span style="font-size:25px;">A. Create an object for the single-cell data. The simulated cell abundances are visualized accordingly based on clinical outcome status</span>
+
+
 
 ```{r}
-obj <- scLASER(metadata = readRDS("C:\\Users\\Juan\\Documents\\GitHub\\scLASER\\sim_data_lv.rds"), pcs = readRDS("C:\\Users\\Juan\\Documents\\GitHub\\scLASER\\sim_pcs_lv.rds"))
+obj <- scLASER(metadata = readRDS("/Users/juanvargas/Documents/GitHub/scLASER/vignettes/metadata.rds"), pcs = readRDS("/Users/juanvargas/Documents/GitHub/scLASER/vignettes/pcs.rds"))
 
 obj
 plot_celltype_proportions(
   obj,
   disease_var = "disease",
-  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
-  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
+  disease_labels = c("0" = "Non-responder", "1" = "Responder"),
+  disease_colors = c("Non-responder" = "#4DAF4A", "Responder" = "#984EA3"),
+  highlight_cell_types = NULL
 )
 ```
 
-### What lives in a scLASER object (slots)
+### <span style="font-size:25px;"> What lives in a scLASER object (slots)</span>
 
 A `scLASER` object is an S4 container that stores each intermediate output of the pipeline in a dedicated **slot**, so later steps can reuse results without recomputing them. In this tutorial we populate the slots in the following order:
 
@@ -210,7 +213,7 @@ A `scLASER` object is an S4 container that stores each intermediate output of th
 -   `@NAM_matrix` — neighborhood abundance matrix used to derive `@nam_pcs` (also created by `association_nam_scLASER()`).
 -   `@pipeline_output` — tidy results table from longitudinal model selection (including LRT p-values). Created by `longAnalyses_plusModelSelection()`.
 
-## B. Visualizing data in UMAP, with data harmonized across samples
+### <span style="font-size:25px;">B. Visualizing data in UMAP, with data harmonized across samples</span>
 
 ```{r}
 obj <- compute_umap(obj, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
@@ -229,7 +232,7 @@ obj <- run_harmony(
 saveRDS(obj, "obj_scLASER.rds")
 ```
 
-## C. Running main functions for longitudinal association modeling
+### <span style="font-size:25px;">C. Running main functions for longitudinal association modeling</span>
 
 The following 2 functions `association_nam_scLASER` and `longAnalyses_plusModelSelection` are the main protagonist of our pipeline. In the previous steps, the goal was to harmonize the pcs to remove any batch effect. In these steps we create the Neighborhood Abundance Matrix from those harmonized pcs. Further we determine which of those NAM PCs or Association score vectors are associated with the interaction of response status and visit.
 

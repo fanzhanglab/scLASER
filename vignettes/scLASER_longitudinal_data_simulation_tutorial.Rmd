@@ -1,14 +1,11 @@
 ---
-title: "Tutorial: using scLASER to simulate longitudinal single-cell data with clinical outcome association (e.g., treatment response)"
+title: "<span style='font-size: 30px;'>Tutorial: using scLASER to simulate longitudinal single-cell data with clinical outcome association (e.g., treatment response)</span>"
 author: |
   [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
   [Lab GitHub - https://github.com/fanzhanglab](https://github.com/fanzhanglab)
 date: "`r format(Sys.Date())`"
 output:
   rmarkdown::html_document:
-    toc: true
-    toc_float: true
-    toc_depth: 3
     code_folding: show
     theme:
       version: 5
@@ -18,7 +15,7 @@ output:
       heading_font: {google: "Inter"}
       code_font: {google: "Fira Code"}
 vignette: >
-  %\VignetteIndexEntry{scLASER • Data Simulation (2, 3, 5 TP)}
+  %\VignetteIndexEntry{scLASER • Data Simulation }
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -42,7 +39,9 @@ library(tidyr)
 library(ggplot2)
 ```
 
-# 1.  Simulate a scenario that captures the longitudinal evolution of interacting cell types across visits and their divergence between groups.
+
+### <span style="font-size:25px;">1. Simulate a scenario that captures the longitudinal evolution of interacting cell types across visits and their divergence between groups.</span>
+
 
 Longitudinal changes in cell-type abundance are specified using **effect design matrices** that explicitly encode how each cell type evolves across visits and differs between groups.
 
@@ -62,7 +61,7 @@ Two matrices are provided:
 
 ---
 
-# 2. Simulate a two-timepoint case consisting of baseline (V0) and follow-up (V1
+### <span style="font-size:25px;">2. Simulate a two-timepoint case consisting of baseline (V0) and follow-up (V1).</span>
 
 ```{r}
 cell_types  <- LETTERS[1:(7 + 3)]  # A-J
@@ -107,8 +106,8 @@ obj2 <- scLASER(metadata = d2)
 plot_celltype_proportions(
   obj2,
   disease_var = "disease",
-  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
-  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
+  disease_labels = c("0" = "Non-responder", "1" = "Responder"),
+  disease_colors = c("Non-responder" = "#4DAF4A", "Responder" = "#984EA3"), highlight_cell_types = NULL
 )
 
 E_prog
@@ -118,7 +117,7 @@ E_ctrl
 
 ---
 
-# 3. Simulate a three-timepoint case (V0, V1, V2)
+### <span style="font-size:25px;"> 3. Simulate a three-timepoint case (V0, V1, V2)</span>
 
 
 ```{r}
@@ -162,8 +161,8 @@ obj3 <- scLASER(metadata = d3)
 plot_celltype_proportions(
   obj3,
   disease_var = "disease",
-  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
-  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
+  disease_labels = c("0" = "Non-responder", "1" = "Responder"),
+  disease_colors = c("Non-responder" = "#4DAF4A", "Responder" = "#984EA3"), highlight_cell_types = NULL
 )
 E_prog
 
@@ -172,7 +171,7 @@ E_ctrl
 
 ---
 
-# 4. Simulate a five-timepoint case 
+### <span style="font-size:25px;">4. Simulate a five-timepoint case </span>
 
 ```{r}
 time_points <- 5
@@ -219,14 +218,13 @@ E_ctrl
 plot_celltype_proportions(
   obj5,
   disease_var = "disease",
-  disease_labels = c("0" = "Non-converter", "1" = "Responder"),
-  disease_colors = c("Non-converter" = "#4DAF4A", "Responder" = "#984EA3")
-)
+  disease_labels = c("0" = "Non-responder", "1" = "Responder"),
+  disease_colors = c("Non-responder" = "#4DAF4A", "Responder" = "#984EA3"), highlight_cell_types = NULL)
 ```
 
 ---
 
-# 5. (Optional) Generate pseudo-PCs
+### <span style="font-size:25px;">5. (Optional) Generate pseudo-PCs</span>
 
 ```{r}
 pcs_matrix <- generate_pseudo_pcs_time(
