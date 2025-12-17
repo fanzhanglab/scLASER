@@ -1,7 +1,6 @@
 ---
 title: "Tutorial: using scLASER to simulate longitudinal single-cell data with clinical outcome association (e.g., treatment response)"
 author: |
-  fanzhang labs  
   [Lab Website - https://fanzhanglab.org](https://fanzhanglab.org)  
   [Lab GitHub - https://github.com/fanzhanglab](https://github.com/fanzhanglab)
 date: "`r format(Sys.Date())`"
