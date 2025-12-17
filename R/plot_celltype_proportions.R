@@ -4,31 +4,44 @@
 #' @param highlight_cell_types Optional character vector of cell type names
 #'   to mark with an asterisk (e.g., interacting / changing types). Default:
 #'   c("A", "B", "I", "J"). Set to NULL to disable highlighting.
+#' @param disease_var Column name in metadata encoding disease status
+#' @param disease_labels Named character vector mapping disease values to labels
+#'   (e.g., c("0" = "Non-converter", "1" = "Converter"))
+#' @param disease_colors Named character vector mapping *labels* (not codes)
+#'   to colors. Names must match the values produced by `disease_labels`.
 #'
 #' @return A ggplot object (invisibly)
 #' @export
 #'
-plot_celltype_proportions <- function(object,
-                                      highlight_cell_types = c("A", "B", "I", "J")) {
+plot_celltype_proportions <- function(
+  object,
+  highlight_cell_types = c("A", "B", "I", "J"),
+  disease_var = "disease",
+  disease_labels = c("0" = "Non-converter", "1" = "Converter"),
+  disease_colors = c("Non-converter" = "#4DAF4A",
+                     "Converter"     = "#984EA3")
+) {
   stopifnot(inherits(object, "scLASER"))
 
   data <- object@metadata
   if (nrow(data) == 0) stop("metadata slot is empty in the scLASER object.")
 
   prop_data <- data %>%
-    dplyr::group_by(subject_id, visit, disease, cell_type, sex) %>%
+    dplyr::group_by(subject_id, visit, .data[[disease_var]], cell_type, sex) %>%
     dplyr::summarise(count = dplyr::n(), .groups = "drop") %>%
-    dplyr::group_by(subject_id, visit, disease) %>%
+    dplyr::group_by(subject_id, visit, .data[[disease_var]]) %>%
     dplyr::mutate(
-      n_total      = sum(count),
-      prop         = count / n_total,
-      proportion   = 100 * prop,
-      sd_prop      = sqrt(prop * (1 - prop) / n_total),
-      sd_percent   = 100 * sd_prop,
-      # Works for any number of visits: V0, V1, V2, V3, ...
-      visit_label  = paste0("V", visit),
-      disease_label = ifelse(disease == 0, "Non-converter", "Converter"),
-      sex_label     = ifelse(sex == 1, "Female", "Male")
+      n_total     = sum(count),
+      prop        = count / n_total,
+      proportion  = 100 * prop,
+      sd_prop     = sqrt(prop * (1 - prop) / n_total),
+      sd_percent  = 100 * sd_prop,
+      visit_label = paste0("V", visit),
+      disease_label = dplyr::recode(
+        as.character(.data[[disease_var]]),
+        !!!disease_labels
+      ),
+      sex_label = ifelse(sex == 1, "Female", "Male")
     ) %>%
     dplyr::ungroup()
 
@@ -55,10 +68,7 @@ plot_celltype_proportions <- function(object,
     ggplot2::geom_line(alpha = 0.4) +
     ggplot2::geom_point(size = 2) +
     ggplot2::facet_wrap(~cell_type2, nrow = 2) +
-    ggplot2::scale_color_manual(
-      values = c("Non-converter" = "#4DAF4A",
-                 "Converter"     = "#984EA3")
-    ) +
+    ggplot2::scale_color_manual(values = disease_colors) +
     ggplot2::labs(
       x     = "Visit",
       y     = "Proportion (%)",
