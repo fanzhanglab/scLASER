@@ -81,7 +81,8 @@ devtools::install_github("fanzhanglab/scLASER")
 
 ## Citations
 
-Lauren A Vanderlinden, Juan Vargas, Jun Inamo, Jade Young, Chuangqi Wang, Fan Zhang. scLASER: a robust framework for simulating and detecting time-dependent single-cell dynamics in longitudinal studies, In submission.
+Vanderlinden LA, Vargas J, Inamo J, Young J, Wang C, Zhang F.  
+*scLASER: A robust framework for simulating and detecting time-dependent single-cell dynamics in longitudinal studies.*  , In submission.
 <br/>
 
 ## Help, Suggestion and Contribution
