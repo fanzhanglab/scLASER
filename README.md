@@ -22,8 +22,8 @@ Longitudinal single-cell clinical studies enable tracking within-individual cell
 **What does scLASER do?**  
 - ***Simulate*** multi-timepoint longitudinal single-cell datasets with distinct dynamic patterns for clinical outcome (e.g., treatment response). 
 - ***Detect*** time-dependent cellular dynamics (linear and nonlinear) associated with treatment response.  
-- ***Generate*** a per-cell association score quantifying each cell's contribution to time × response  
-- ***Validate*** cell-type classification performance for predicting time × response interactions
+- ***Generate*** a per-cell association score quantifying each cell's contribution to time x response.  
+- ***Validate*** cell-type classification performance for predicting time x response interactions.
 
 
 <br/>
