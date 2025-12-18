@@ -67,10 +67,12 @@ devtools::install_github("fanzhanglab/scLASER")
 
 ## Tutorials
 
-- [scLASER longitudinal data analytical tutorial: ](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_analytical_pipeline.html)
- Detecting cellular neighborhood dynamics for time-dependent clinical outcome changes (e.g., treatment response, disease progression).
-- [scLASER longitudinal data simulation tutorial: ](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_data_simulation_tutorial.html)
+- [scLASER longitudinal data analytical tutorial](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_analytical_pipeline.html)  
+  Detecting cellular neighborhood dynamics for time-dependent clinical outcome changes (e.g., treatment response, disease progression).
+
+- [scLASER longitudinal data simulation tutorial](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_data_simulation_tutorial.html)  
   Simulating longitudinal single-cell datasets with user-defined clinical outcome trajectories, number of timepoints, demographic structures, number of individuals, number of cells, and technical variability.
+
 
 
 
