@@ -22,4 +22,82 @@ Longitudinal single-cell clinical studies enable tracking within-individual cell
 **What does scLASER do?**  
 - ***Simulate*** multi-timepoint longitudinal single-cell datasets with distinct dynamic patterns for clinical outcome (e.g., treatment response). 
 - ***Detect*** time-dependent cellular dynamics (linear and nonlinear) associated with treatment response.  
-- ***Generate*** a per-cell association score quantifying each cell's contribution to time 
+- ***Generate*** a per-cell association score quantifying each cell's contribution to time × response  
+- ***Validate*** cell-type classification performance for predicting time × response interactions
+
+
+<br/>
+
+## Installation
+
+To install the latest development version directly from GitHub:
+
+```r
+
+devtools::install_github("fanzhanglab/scLASER")
+
+```
+
+<br/>
+
+### Dependencies
+
+```r
+- R (>= 4.1.0)
+- methods
+- stats
+- utils
+- Matrix
+- nlme
+- lme4
+- pbapply
+- purrr
+- caret
+- uwot
+- Seurat
+- harmony
+- broom.mixed
+- foreach
+- doParallel
+- moments
+```
+
+
+<br/>
+
+## Tutorials
+
+- [scLASER longitudinal data analytical tutorial: Detecting cellular neighborhood dynamics for time-dependent clinical outcome changes (e.g., treatment response, disease progression)](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_analytical_pipeline.html)
+- [scLASER longitudinal data simulation tutorial: Simulating longitudinal single-cell datasets with user-defined clinical outcome trajectories, # timepoints, demographic structures, # individuals, # cells, technical variability, etc.](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_data_simulation_tutorial.html)
+
+
+
+
+<br/>
+
+## Citations
+
+Lauren A Vanderlinden, Juan Vargas, Jun Inamo, Jade Young, Chuangqi Wang, Fan Zhang. scLASER: a robust framework for simulating and detecting time-dependent single-cell dynamics in longitudinal studies, In submission.
+<br/>
+
+## Help, Suggestion and Contribution
+
+Using github [**issues**](https://github.com/fanzhanglab/scLaser/issues)
+section, if you have any question, comments, suggestions, or to report
+coding related issues of scLASER is highly encouraged than sending
+emails.
+
+- Please **check the GitHub
+  [issues](https://github.com/fanzhanglab/scLASER/issues)** for similar
+  issues that has been reported and resolved. This helps the team to
+  focus on adding new features and working on cool projects instead of
+  resolving the same issues!
+- **Examples** are required when filing a GitHub issue. In certain
+  cases, please share your scLASER object and related codes to understand
+  the issues.
+  
+<br/>
+
+## Contact 
+
+Please contact [fanzhanglab@gmail.com](fanzhanglab@gmail.com) for further questions or potential collaborative opportunities!
