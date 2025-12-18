@@ -12,7 +12,7 @@
 <img src="scLASER_hex.png" align="right" width="220" alt="scLASER logo"/>
 
 <p style="font-size: 18px; line-height: 1.6;">
-Longitudinal single-cell clinical studies enable tracking within-individual cellular dynamics, but methods for modeling temporal phenotypic changes and estimating power remain limited. We present scLASER, a framework detecting time-dependent cellular neighborhood dynamics and simulating longitudinal single-cell datasets for power estimation. Across benchmarks, scLASER shows superior sensitivity, particularly for non-linear temporal patterns. Applications to inflammatory bowel disease reveal treatment-responsive NOTCH3+ stromal trajectories, while analysis of COVID-19 data identifies distinct axes of T cell activity over disease progression. scLASER enables robust longitudinal single-cell analysis and optimization of study design.
+Longitudinal single-cell clinical studies enable tracking within-individual cellular dynamics, but methods for modeling temporal phenotypic changes and estimating power remain limited. We present **scLASER**, a framework **detecting time-dependent cellular neighborhood dynamics** and **simulating longitudinal single-cell datasets for power estimation**. Across benchmarks, scLASER shows superior sensitivity, particularly for non-linear temporal patterns. Applications to inflammatory bowel disease reveal treatment-responsive **NOTCH3+ stromal trajectories**, while analysis of COVID-19 data identifies distinct axes of **T cell activity** over disease progression. scLASER enables robust longitudinal single-cell analysis and optimization of study design.
 
 </p>
 
@@ -21,10 +21,10 @@ Longitudinal single-cell clinical studies enable tracking within-individual cell
 <img width="100%" align="center" src="https://github.com/fanzhanglab/scLASER/blob/main/docs/figure.png?raw=true">
 
 **What does scLASER do?**  
-- ***Simulate*** multiple timepoint longitudinal single-cell data, with distinct patterns between treatment responders vs non-responders  
-- ***Detect*** time-dependent cell dynamics and phenotypes associated with response status  
-- ***Generate*** an association score per individual cell reflecting contribution to time Ã— clinical outcome  
-- ***Validate*** cell-type classification performance for predicting time Ã— response effects
+- ***Simulate*** multi-timepoint longitudinal single-cell datasets with distinct dynamic patterns for clinical outcome (e.g., treatment response). 
+- ***Detect*** time-dependent cellular dynamics (linear and nonlinear) associated with treatment response.  
+- ***Generate*** a per-cell association score quantifying each cell's contribution to time × response  
+- ***Validate*** cell-type classification performance for predicting time × response interactions
 
 
 <br/>
@@ -68,8 +68,8 @@ devtools::install_github("fanzhanglab/scLASER")
 
 ## Tutorials
 
-- [scLASER longitudinal data analytical tutorial](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_analytical_pipeline.html)
-- [scLASER longitudinal data simulation tutorial](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_data_simulation_tutorial.html)
+- [scLASER longitudinal data analytical tutorial: Detecting cellular neighborhood dynamics for time-dependent clinical outcome changes (e.g., treatment response, disease progression)](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_analytical_pipeline.html)
+- [scLASER longitudinal data simulation tutorial: Simulating longitudinal single-cell datasets with user-defined clinical outcome trajectories, # timepoints, demographic structures, # individuals, # cells, technical variability, etc.](https://fanzhanglab.github.io/scLASER/vignettes/scLASER_longitudinal_data_simulation_tutorial.html)
 
 
 
