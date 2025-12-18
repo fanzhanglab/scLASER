@@ -2,6 +2,8 @@
 
 [![R-CMD-check](https://github.com/fanzhanglab/scLASER/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/fanzhanglab/scLASER/actions/workflows/R-CMD-check.yaml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=fanzhanglab.scLASER)
+
 
 
 
