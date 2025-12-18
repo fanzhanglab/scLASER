@@ -2,14 +2,24 @@ cff-version: 1.2.0
 message: "If you use scLASER, please cite this work using the following metadata."
 title: "scLASER: Single-Cell Longitudinal Analysis, Simulation, and Modeling using Neighbor Abundance Meta-PCs"
 type: software
+
 authors:
-  - given-names: Lauren
+  - given-names: Lauren A
     family-names: Vanderlinden
     email: lauren.vanderlinden@cuanschutz.edu
     affiliation: "University of Colorado Anschutz Medical Campus"
   - given-names: Juan
     family-names: Vargas
     email: juan.vargas@cuanschutz.edu
+    affiliation: "University of Colorado Anschutz Medical Campus"
+  - given-names: Jun
+    family-names: Inamo
+    affiliation: "University of Colorado Anschutz Medical Campus"
+  - given-names: Jade
+    family-names: Young
+    affiliation: "University of Colorado Anschutz Medical Campus"
+  - given-names: Chuangqi
+    family-names: Wang
     affiliation: "University of Colorado Anschutz Medical Campus"
   - given-names: Fan
     family-names: Zhang
@@ -18,6 +28,7 @@ authors:
 
 repository-code: "https://github.com/fanzhanglab/scLASER"
 url: "https://github.com/fanzhanglab/scLASER"
+
 abstract: >
   scLASER is an R package for modeling and simulating single-cell longitudinal datasets
   using harmonized Neighbor Abundance Principal Components (NAM-PCs).
@@ -37,14 +48,21 @@ keywords:
 license: MIT
 version: 0.0.0.9000
 date-released: 2025-10-23
+
 preferred-citation:
   type: software
   title: "scLASER: Single-Cell Longitudinal Analysis, Simulation, and Modeling using Neighbor Abundance Meta-PCs"
   authors:
-    - given-names: Lauren
+    - given-names: Lauren A
       family-names: Vanderlinden
     - given-names: Juan
       family-names: Vargas
+    - given-names: Jun
+      family-names: Inamo
+    - given-names: Jade
+      family-names: Young
+    - given-names: Chuangqi
+      family-names: Wang
     - given-names: Fan
       family-names: Zhang
   year: 2025
