@@ -7,7 +7,7 @@
 
 <h1 style="font-size: 38px;">scLASER</h1>
 
-<img src="scLASER_hex_cropped.png" align="right" width="220" alt="scLASER logo"/>
+<img src="scLASER_hex.png" align="right" width="220" alt="scLASER logo"/>
 
 <p style="font-size: 18px; line-height: 1.6;">
 Longitudinal single-cell clinical studies enable tracking within-individual cellular dynamics, but methods for modeling temporal phenotypic changes and estimating power remain limited. We present scLASER, a framework detecting time-dependent cellular neighborhood dynamics and simulating longitudinal single-cell datasets for power estimation. Across benchmarks, scLASER shows superior sensitivity, particularly for non-linear temporal patterns. Applications to inflammatory bowel disease reveal treatment-responsive NOTCH3+ stromal trajectories, while analysis of COVID-19 data identifies distinct axes of T cell activity over disease progression. scLASER enables robust longitudinal single-cell analysis and optimization of study design.
