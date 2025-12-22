@@ -156,10 +156,9 @@ association_nam_scLASER <- function(obj,seurat_object = NULL,
                                local_test = TRUE,
                                seed = 1234,
                                return_nam = TRUE) {
-  if (!is.null(seurat_object) && is.null(obj@metadata) && is.null(obj@harmony)) {
-    message("will use Seurat object following analysis...")
-  } else if (is.null(seurat_object) && !is.null(obj@metadata) && !is.null(obj@harmony)) {
-    # build a minimal Seurat object from metadata + precomputed PCs (stored as 'harmony' reduction)
+} else if (is.null(seurat_object)) {
+  stop("If seurat_object is NULL, obj must contain both @metadata and @harmony so a Seurat object can be built.")
+}
 
 
     meta <- obj@metadata
