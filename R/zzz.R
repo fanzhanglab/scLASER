@@ -1,6 +1,6 @@
 .onLoad <- function(libname, pkgname) {
   op <- options()
-  op.sclaser <- list(sclaser.silent_startup = FALSE)
+  op.sclaser <- list(sclaser.silent_startup = TRUE)
   toset <- !(names(op.sclaser) %in% names(op))
   if (any(toset)) options(op.sclaser[toset])
   invisible()
@@ -37,7 +37,7 @@
     ascii_logo,
     sprintf("Version: %s", ver),
     sprintf("Authors: %s", authors_str %||% "N/A"),
-    sprintf("Lab: %s — %s", lab, lab_url),
+    sprintf("Lab: %s - %s", lab, lab_url),
     cite_hint,
     "Tip: options(sclaser.silent_startup = TRUE) to mute this banner.",
     sep = "\n"
