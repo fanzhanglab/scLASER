@@ -6,8 +6,8 @@
 \usage{
 plot_celltype_proportions(
   object,
-  highlight_cell_types,
-  disease_var,
+  highlight_cell_types = NULL,
+  disease_var = "disease",
   disease_labels,
   disease_colors
 )
@@ -16,13 +16,13 @@ plot_celltype_proportions(
 \item{object}{scLASER object}
 
 \item{highlight_cell_types}{Optional character vector of cell type names
-to mark with an asterisk (e.g., interacting / changing types). Default:
-c("A", "B", "I", "J"). Set to NULL to disable highlighting.}
+to mark with an asterisk (e.g., interacting / changing types). Set to NULL
+to disable highlighting.}
 
 \item{disease_var}{Column name in metadata encoding disease status}
 
 \item{disease_labels}{Named character vector mapping disease values to labels
-(e.g., c("0" = "Non-converter", "1" = "Converter"))}
+(e.g., c("0" = "Non-responder", "1" = "Responder"))}
 
 \item{disease_colors}{Named character vector mapping *labels* (not codes)
 to colors. Names must match the values produced by `disease_labels`.}
