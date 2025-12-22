@@ -28,59 +28,64 @@ association_nam_scLASER(
 )
 }
 \arguments{
-\item{seurat_object}{A `Seurat` object. If provided, it must contain at least one
-cell-cell graph in `object@graphs` (e.g. after `FindNeighbors()`).
-If `NULL`, you must provide both `metadata` and `pcs`.}
+\item{obj}{A \code{\linkS4class{scLASER}} object. Must contain either:
+(a) a populated \code{@harmony} matrix and \code{@metadata} to internally
+construct a Seurat object, or
+(b) be accompanied by a non-\code{NULL} \code{seurat_object}.}
 
-\item{test_var}{Character. Name of the numeric sample-level variable to test
-(must be a column of `metadata` or `seurat_object@meta.data` after aggregation).}
+\item{seurat_object}{A \code{Seurat} object with a precomputed cell-cell
+neighbor graph (e.g. after \code{Seurat::FindNeighbors()}). If \code{NULL},
+a minimal Seurat object is constructed internally from \code{obj}.}
 
-\item{samplem_key}{Character. Name of the sample identifier column used to map
-cells to samples (present in cell-level `meta.data`) and to index `metadata`.}
+\item{test_var}{Character. Name of a numeric sample-level variable to test
+for association with NAM embeddings.}
 
-\item{graph_use}{Character. Name of the graph in `seurat_object@graphs` to use
-(default `'RNA_snn'`). If `NULL`, the first available graph is used.}
+\item{samplem_key}{Character. Column name identifying samples in both
+cell-level and sample-level metadata.}
 
-\item{batches}{Optional character vector of sample-level batch columns used only
-for conditional permutation strata and batch-kurtosis QC.}
+\item{graph_use}{Character. Name of the graph in
+\code{seurat_object@graphs} to use. Default \code{"RNA_snn"}.}
 
-\item{covs}{Optional character vector of sample-level covariate columns to residualize out
-prior to association testing.}
+\item{batches}{Optional character vector of batch variable names used for
+conditional permutation stratification.}
 
-\item{nsteps}{Integer or `NULL`. Number of graph diffusion steps to form NAM.
-If `NULL`, an adaptive stopping rule based on median kurtosis is used.}
+\item{covs}{Optional character vector of covariate names to regress out
+before association testing.}
 
-\item{verbose}{Logical. Print progress messages. Default `TRUE`.}
+\item{nsteps}{Integer or \code{NULL}. Number of diffusion steps for NAM
+construction. If \code{NULL}, an adaptive stopping rule is used.}
 
-\item{assay}{Character or `NULL`. Assay name for the created reduction. Default `NULL`.}
+\item{verbose}{Logical. Print progress messages.}
 
-\item{key}{Character. Reduction key prefix for the created reduction. Default `'NAMPC_'`.}
+\item{assay}{Character or \code{NULL}. Assay name for the created Seurat
+reduction.}
 
-\item{maxnsteps}{Integer. Maximum diffusion steps when using adaptive stopping. Default `15L`.}
+\item{key}{Character. Key prefix for the NAM PC reduction.}
 
-\item{max_frac_pcs}{Numeric in (0,1]. Maximum fraction of samples to use as the
-upper bound on SVD PCs (also bounded by sample size). Default `0.15`.}
+\item{maxnsteps}{Integer. Maximum number of diffusion steps when using
+adaptive stopping.}
 
-\item{ks}{Optional integer vector of candidate numbers of NAM PCs to consider
-in the min-\emph{p} procedure. If `NULL`, a data-driven sequence is used.}
+\item{max_frac_pcs}{Numeric in (0,1]. Maximum fraction of samples used to
+determine the upper bound on NAM PCs.}
 
-\item{Nnull}{Integer. Number of conditional permutations for the global test. Default `1000`.}
+\item{n_pcs}{Integer or \code{NULL}. Explicit number of NAM PCs to use when
+constructing the neighbor graph and downstream association tests.}
 
-\item{force_permute_all}{Logical. If `TRUE`, ignore `batches` and permute across all samples. Default `FALSE`.}
+\item{ks}{Optional integer vector of candidate numbers of NAM PCs to scan
+in the min-\emph{p} procedure.}
 
-\item{local_test}{Logical. If `TRUE`, compute neighborhood-level empirical FDR curves and thresholds. Default `TRUE`.}
+\item{Nnull}{Integer. Number of conditional permutations.}
 
-\item{seed}{Integer or `NULL`. RNG seed used for permutations. Default `1234`.}
+\item{force_permute_all}{Logical. If \code{TRUE}, ignore batch structure
+during permutations.}
 
-\item{return_nam}{Logical. If `TRUE`, store NAM embeddings/loadings/singular values/variance explained
-in the returned reduction. Default `TRUE`.}
+\item{local_test}{Logical. If \code{TRUE}, compute neighborhood-level
+empirical FDR thresholds.}
 
-\item{metadata}{A data.frame of sample-level metadata (rows = samples, columns = covariates).
-Required only when `seurat_object` is `NULL`. Must include `test_var`, any `batches`/`covs`,
-and the `samplem_key` column that links samples to cells.}
+\item{seed}{Integer. Random seed for permutation testing.}
 
-\item{pcs}{A numeric matrix of precomputed embeddings (rows = samples, cols = PCs)
-used to build a graph when `seurat_object` is `NULL`. Ignored otherwise.}
+\item{return_nam}{Logical. If \code{TRUE}, store NAM embeddings and related
+matrices in the returned object.}
 }
 \value{
 A `Seurat` object where:

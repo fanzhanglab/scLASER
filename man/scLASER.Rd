@@ -16,6 +16,39 @@ scLASER(
   pipeline_output = NULL
 )
 }
+\arguments{
+\item{metadata}{A data.frame of cell/sample metadata.}
+
+\item{pcs}{A numeric matrix of principal components (rows aligned to
+\code{metadata}). Or \code{NULL}.}
+
+\item{masc}{A data.frame of MASC/GLM results. Or \code{NULL}.}
+
+\item{umap}{A data.frame with columns \code{UMAP1} and \code{UMAP2}. Or \code{NULL}.}
+
+\item{harmony}{A numeric matrix of Harmony-corrected embeddings. Or \code{NULL}.}
+
+\item{nam_pcs}{A numeric matrix of NAM PC embeddings. Or \code{NULL}.}
+
+\item{NAM_matrix}{A numeric matrix storing the full NAM embedding matrix. Or \code{NULL}.}
+
+\item{plsda_LV}{A numeric matrix of PLS-DA latent variables. Or \code{NULL}.}
+
+\item{pipeline_output}{A data.frame storing tidy outputs from pipeline steps.
+Or \code{NULL}.}
+}
+\value{
+A \code{\linkS4class{scLASER}} object.
+}
 \description{
-Create a scLASER object
+Construct a \code{\linkS4class{scLASER}} object. This is a lightweight
+constructor that stores provided components into the corresponding slots.
+}
+\examples{
+\donttest{
+## Minimal constructor usage:
+## obj <- scLASER(metadata = data.frame())
+## obj
+}
+
 }

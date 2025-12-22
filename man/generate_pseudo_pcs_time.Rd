@@ -48,6 +48,17 @@ arguments.}
 PC indices are influenced by the corresponding metadata variable.
 Use `0` or an empty vector to disable an effect.}
 
+\item{interaction_pcs}{Integer vector of PC indices influenced by the
+interaction term (from `interact_term_col`). Use `0` or `integer(0)` to
+disable.}
+
+\item{visit_pcs}{Integer vector of PC indices influenced by the visit/time
+variable (from `visit_col`). Use `0` or `integer(0)` to disable.}
+
+\item{subject_pcs}{Integer vector of PC indices influenced by subject-level
+structure. (Currently reserved for future extension; kept for API
+completeness.)}
+
 \item{scale_factor}{Numeric. Controls how variance decays across PCs.
 Higher values produce lower variance for higher-index PCs.}
 
@@ -55,8 +66,25 @@ Higher values produce lower variance for higher-index PCs.}
 between 0 and 1 specifying the proportion of variance attributable to
 each factor for PCs listed in the corresponding `*_pcs` argument.}
 
+\item{batch_ratio}{Numeric in [0, 1]. Proportion of variance attributable to
+batch effects for PCs listed in `batch_pcs`.}
+
+\item{visit_ratio}{Numeric in [0, 1]. Proportion of variance attributable to
+visit/time effects for PCs listed in `visit_pcs`.}
+
+\item{interaction_ratio}{Numeric in [0, 1]. Proportion of variance
+attributable to the interaction term for PCs listed in `interaction_pcs`.}
+
+\item{subject_ratio}{Numeric in [0, 1]. Proportion of variance attributable
+to subject effects for PCs listed in `subject_pcs`.}
+
 \item{cluster_col, disease_col, sex_col, age_col, bmi_col, batch_col, }{visit_col,interact_term_col Character scalars giving column names in
 `data` used to derive structured effects.}
+
+\item{visit_col}{Character scalar. Column name in `data` encoding visit/time.}
+
+\item{interact_term_col}{Character scalar. Column name in `data` encoding the
+interaction term used for `interaction_pcs` (e.g., a visit-by-disease term).}
 
 \item{seed}{Integer. Random seed for reproducibility of the simulated PCs.
 Note that the seed is applied implicitly through repeated calls to

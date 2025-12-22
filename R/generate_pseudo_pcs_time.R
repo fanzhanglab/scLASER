@@ -34,6 +34,27 @@
 #' @param seed Integer. Random seed for reproducibility of the simulated PCs.
 #'   Note that the seed is applied implicitly through repeated calls to
 #'   `rnorm()` and `sample()` inside the function.
+#' @param interaction_pcs Integer vector of PC indices influenced by the
+#'   interaction term (from `interact_term_col`). Use `0` or `integer(0)` to
+#'   disable.
+#' @param visit_pcs Integer vector of PC indices influenced by the visit/time
+#'   variable (from `visit_col`). Use `0` or `integer(0)` to disable.
+#' @param subject_pcs Integer vector of PC indices influenced by subject-level
+#'   structure. (Currently reserved for future extension; kept for API
+#'   completeness.)
+#'
+#' @param batch_ratio Numeric in [0, 1]. Proportion of variance attributable to
+#'   batch effects for PCs listed in `batch_pcs`.
+#' @param visit_ratio Numeric in [0, 1]. Proportion of variance attributable to
+#'   visit/time effects for PCs listed in `visit_pcs`.
+#' @param interaction_ratio Numeric in [0, 1]. Proportion of variance
+#'   attributable to the interaction term for PCs listed in `interaction_pcs`.
+#' @param subject_ratio Numeric in [0, 1]. Proportion of variance attributable
+#'   to subject effects for PCs listed in `subject_pcs`.
+#'
+#' @param visit_col Character scalar. Column name in `data` encoding visit/time.
+#' @param interact_term_col Character scalar. Column name in `data` encoding the
+#'   interaction term used for `interaction_pcs` (e.g., a visit-by-disease term).
 #'
 #' @return A numeric matrix of dimension `nrow(data) x n_pcs`, where each column
 #'   corresponds to a simulated pseudo principal component.
