@@ -39,6 +39,9 @@ Imports:
     tidyr,
     uwot,
     mixOmics,
+    RSpectra,
+    glue,
+    tibble
 Suggests:
     rmarkdown,
     knitr,
