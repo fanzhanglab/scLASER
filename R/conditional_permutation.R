@@ -13,7 +13,7 @@
 #'
 #' @keywords internal
 #' @noRd
-.conditional_permutation <- function(B, Y, num) {
+conditional_permutation <- function(B, Y, num) {
   purrr::map(seq_len(num), function(i) {
     split(seq_len(length(Y)), B) %>%
       purrr::map(function(idx) {
