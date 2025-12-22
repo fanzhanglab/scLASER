@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_pseudo_pcs_time.R
 \name{generate_pseudo_pcs_time}
 \alias{generate_pseudo_pcs_time}
-\title{Title}
+\title{Generate pseudo principal components with time-dependent structure}
 \usage{
 generate_pseudo_pcs_time(
   data,
@@ -38,8 +38,59 @@ generate_pseudo_pcs_time(
 )
 }
 \arguments{
-\item{seed}{}
+\item{data}{A data.frame containing per-cell metadata. Each row represents
+one cell/sample and must include the columns specified by the `*_col`
+arguments.}
+
+\item{n_pcs}{Integer. Number of pseudo PCs to generate.}
+
+\item{cluster_pcs, disease_pcs, sex_pcs, age_pcs, bmi_pcs, batch_pcs, }{interaction_pcs,visit_pcs,subject_pcs Integer vectors indicating which
+PC indices are influenced by the corresponding metadata variable.
+Use `0` or an empty vector to disable an effect.}
+
+\item{scale_factor}{Numeric. Controls how variance decays across PCs.
+Higher values produce lower variance for higher-index PCs.}
+
+\item{cluster_ratio, disease_ratio, sex_ratio, age_ratio, bmi_ratio, }{batch_ratio,visit_ratio,interaction_ratio,subject_ratio Numeric values
+between 0 and 1 specifying the proportion of variance attributable to
+each factor for PCs listed in the corresponding `*_pcs` argument.}
+
+\item{cluster_col, disease_col, sex_col, age_col, bmi_col, batch_col, }{visit_col,interact_term_col Character scalars giving column names in
+`data` used to derive structured effects.}
+
+\item{seed}{Integer. Random seed for reproducibility of the simulated PCs.
+Note that the seed is applied implicitly through repeated calls to
+`rnorm()` and `sample()` inside the function.}
+}
+\value{
+A numeric matrix of dimension `nrow(data) x n_pcs`, where each column
+  corresponds to a simulated pseudo principal component.
 }
 \description{
-Title
+Simulates a matrix of pseudo principal components (PCs) by combining
+Gaussian noise with structured effects derived from metadata variables
+(e.g., cell type, disease status, visit, batch). Each PC can be assigned
+to reflect one or more biological or technical factors with configurable
+signal-to-noise ratios.
+}
+\details{
+This function is primarily intended for simulation and benchmarking of
+longitudinal single-cell analysis workflows.
+}
+\examples{
+\donttest{
+## Example using pre-loaded metadata:
+## meta <- readRDS("path/to/metadata.rds")
+## pcs <- generate_pseudo_pcs_time(
+##   data = meta,
+##   n_pcs = 10,
+##   cluster_pcs = 1:5,
+##   cluster_ratio = 0.3,
+##   visit_pcs = 6:10,
+##   visit_ratio = 0.2,
+##   seed = 123
+## )
+## dim(pcs)
+}
+
 }

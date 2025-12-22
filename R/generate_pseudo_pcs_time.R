@@ -1,40 +1,60 @@
-#' Title
+#' Generate pseudo principal components with time-dependent structure
 #'
-#' @param data
-#' @param n_pcs
-#' @param cluster_pcs
-#' @param disease_pcs
-#' @param sex_pcs
-#' @param age_pcs
-#' @param bmi_pcs
-#' @param batch_pcs
-#' @param interaction_pcs
-#' @param visit_pcs
-#' @param subject_pcs
-#' @param scale_factor
-#' @param cluster_ratio
-#' @param disease_ratio
-#' @param sex_ratio
-#' @param age_ratio
-#' @param bmi_ratio
-#' @param batch_ratio
-#' @param visit_ratio
-#' @param interaction_ratio
-#' @param subject_ratio
-#' @param cluster_col
-#' @param disease_col
-#' @param sex_col
-#' @param age_col
-#' @param bmi_col
-#' @param batch_col
-#' @param visit_col
-#' @param interact_term_col
-#' @param seed
+#' Simulates a matrix of pseudo principal components (PCs) by combining
+#' Gaussian noise with structured effects derived from metadata variables
+#' (e.g., cell type, disease status, visit, batch). Each PC can be assigned
+#' to reflect one or more biological or technical factors with configurable
+#' signal-to-noise ratios.
 #'
-#' @return
-#' @export
+#' This function is primarily intended for simulation and benchmarking of
+#' longitudinal single-cell analysis workflows.
+#'
+#' @param data A data.frame containing per-cell metadata. Each row represents
+#'   one cell/sample and must include the columns specified by the `*_col`
+#'   arguments.
+#' @param n_pcs Integer. Number of pseudo PCs to generate.
+#'
+#' @param cluster_pcs,disease_pcs,sex_pcs,age_pcs,bmi_pcs,batch_pcs,
+#'   interaction_pcs,visit_pcs,subject_pcs Integer vectors indicating which
+#'   PC indices are influenced by the corresponding metadata variable.
+#'   Use `0` or an empty vector to disable an effect.
+#'
+#' @param scale_factor Numeric. Controls how variance decays across PCs.
+#'   Higher values produce lower variance for higher-index PCs.
+#'
+#' @param cluster_ratio,disease_ratio,sex_ratio,age_ratio,bmi_ratio,
+#'   batch_ratio,visit_ratio,interaction_ratio,subject_ratio Numeric values
+#'   between 0 and 1 specifying the proportion of variance attributable to
+#'   each factor for PCs listed in the corresponding `*_pcs` argument.
+#'
+#' @param cluster_col,disease_col,sex_col,age_col,bmi_col,batch_col,
+#'   visit_col,interact_term_col Character scalars giving column names in
+#'   `data` used to derive structured effects.
+#'
+#' @param seed Integer. Random seed for reproducibility of the simulated PCs.
+#'   Note that the seed is applied implicitly through repeated calls to
+#'   `rnorm()` and `sample()` inside the function.
+#'
+#' @return A numeric matrix of dimension `nrow(data) x n_pcs`, where each column
+#'   corresponds to a simulated pseudo principal component.
 #'
 #' @examples
+#' \donttest{
+#' ## Example using pre-loaded metadata:
+#' ## meta <- readRDS("path/to/metadata.rds")
+#' ## pcs <- generate_pseudo_pcs_time(
+#' ##   data = meta,
+#' ##   n_pcs = 10,
+#' ##   cluster_pcs = 1:5,
+#' ##   cluster_ratio = 0.3,
+#' ##   visit_pcs = 6:10,
+#' ##   visit_ratio = 0.2,
+#' ##   seed = 123
+#' ## )
+#' ## dim(pcs)
+#' }
+#'
+#' @export
 generate_pseudo_pcs_time <- function(data,
 
                                      n_pcs = 20,
