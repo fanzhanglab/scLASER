@@ -154,7 +154,7 @@ mixOmics_plsda <- function(object,
           ncomp = nc
         )
 
-        pred <- mixOmics::predict(
+        pred <- stats::predict(
           fit_fold,
           X[test_idx, , drop = FALSE],
           dist = "max.dist"
