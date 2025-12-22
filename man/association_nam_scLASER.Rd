@@ -101,7 +101,10 @@ A `Seurat` object where:
         `r2_perpc`, `nullr2_mean`, `nullr2_std`, projection matrix `M` and rank `r`.
     }
   \item `meta.data$cna_ncorrs`: per-cell (neighborhood) correlation score.
-  \item `meta.data$cna_ncorrs_fdr{05,10,20,30,40,50}`: thresholded versions at target FDRs.
+  \item `meta.data$cna_ncorrs_fdr05`, `meta.data$cna_ncorrs_fdr10`,
+  `meta.data$cna_ncorrs_fdr20`, `meta.data$cna_ncorrs_fdr30`,
+  `meta.data$cna_ncorrs_fdr40`, `meta.data$cna_ncorrs_fdr50`:
+  thresholded versions at target FDR cutoffs.
 }
 }
 \description{
