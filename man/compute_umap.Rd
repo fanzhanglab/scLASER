@@ -2,21 +2,45 @@
 % Please edit documentation in R/compute_umap.R
 \name{compute_umap}
 \alias{compute_umap}
-\title{Title}
+\title{Compute a UMAP embedding from stored PCs}
 \usage{
 compute_umap(object, n_neighbors = 30, metric = "cosine", min_dist = 0.01, ...)
 }
 \arguments{
-\item{object}{}
+\item{object}{A \code{\linkS4class{scLASER}} object. Must contain a
+non-\code{NULL} numeric matrix in \code{object@pcs}.}
 
-\item{n_neighbors}{}
+\item{n_neighbors}{Integer. Number of nearest neighbors used in UMAP.
+Larger values preserve more global structure. Passed to
+\code{uwot::umap()}.}
 
-\item{metric}{}
+\item{metric}{Character. Distance metric for UMAP. Passed to
+\code{uwot::umap()} (e.g., \code{"cosine"}, \code{"euclidean"}).}
 
-\item{min_dist}{}
+\item{min_dist}{Numeric. Minimum distance between points in the embedding.
+Smaller values produce tighter clusters. Passed to \code{uwot::umap()}.}
 
-\item{...}{}
+\item{...}{Additional arguments passed to \code{uwot::umap()} (e.g.,
+\code{set_op_mix_ratio}, \code{spread}, \code{n_threads}, \code{seed}).}
+}
+\value{
+The input \code{scLASER} object with \code{object@umap} populated as a
+  data.frame containing \code{UMAP1} and \code{UMAP2}.
 }
 \description{
-Title
+Computes a two-dimensional UMAP embedding using the principal components
+stored in \code{object@pcs} and saves the result in \code{object@umap}
+as a data.frame with columns \code{UMAP1} and \code{UMAP2}.
+}
+\details{
+This is a convenience wrapper around \code{uwot::umap()}.
+}
+\examples{
+\donttest{
+## Example with a precomputed PCs matrix stored in an scLASER object:
+## obj <- readRDS("path/to/your_sclaser_object.rds")
+## obj <- compute_umap(obj, n_neighbors = 30, metric = "cosine", min_dist = 0.01)
+## head(obj@umap)
+}
+
 }

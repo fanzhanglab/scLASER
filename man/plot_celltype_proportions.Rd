@@ -6,10 +6,10 @@
 \usage{
 plot_celltype_proportions(
   object,
-  highlight_cell_types = c("A", "B", "I", "J"),
-  disease_var = "disease",
-  disease_labels = c(`0` = "Non-converter", `1` = "Converter"),
-  disease_colors = c(`Non-converter` = "#4DAF4A", Converter = "#984EA3")
+  highlight_cell_types,
+  disease_var,
+  disease_labels,
+  disease_colors
 )
 }
 \arguments{

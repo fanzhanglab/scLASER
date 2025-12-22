@@ -2,7 +2,7 @@
 % Please edit documentation in R/scLASER_modeling.R
 \name{scLASER_modeling}
 \alias{scLASER_modeling}
-\title{Title}
+\title{Fit longitudinal mixed models across all NAM PCs}
 \usage{
 scLASER_modeling(
   object,
@@ -14,8 +14,62 @@ scLASER_modeling(
 )
 }
 \arguments{
-\item{object}{}
+\item{object}{A \code{\linkS4class{scLASER}} object with \code{@metadata} and
+\code{@nam_pcs}. Each NAM PC is modeled as an outcome.}
+
+\item{disease_var}{Character scalar. Column name in \code{object@metadata}
+indicating group/disease status (coerced to factor internally).}
+
+\item{time_var}{Character scalar. Column name in \code{object@metadata}
+indicating time/visit.}
+
+\item{covariates}{Optional character vector of additional covariate column
+names in \code{object@metadata} to include as fixed effects (e.g.
+\code{c("age", "sex")}). Use \code{NULL} or \code{character(0)} to omit.}
+
+\item{subject_var}{Character scalar. Column name identifying subjects for the
+level-1 random intercept.}
+
+\item{sample_var}{Character scalar. Column name identifying samples nested
+within subjects for the level-2 random intercept.}
+}
+\value{
+The input \code{scLASER} object with \code{object@pipeline_output}
+  populated. The table includes, per PC: the selected model (3+ time points),
+  fixed-effect coefficient rows, test statistics, and an LRT p-value for the
+  interaction.
 }
 \description{
-Title
+Fits mixed-effects models for each NAM PC stored in \code{object@nam_pcs}
+using metadata from \code{object@metadata}. The function adapts to the number
+of unique time points in \code{time_var}:
+}
+\details{
+\itemize{
+  \item For \strong{2 time points}, fits two \code{nlme::lme()} models per PC:
+  a full model with \code{disease_var * time_var} and a matched null without
+  the interaction, then computes an LRT p-value.
+  \item For \strong{3+ time points}, fits and compares three candidate models
+  (continuous time, categorical time, quadratic time) by AIC, selects the best,
+  and computes an LRT versus the matched null (no interaction for the chosen
+  time specification).
+}
+
+Results are saved to \code{object@pipeline_output} as a tidy data.frame.
+}
+\examples{
+\donttest{
+## Requires an scLASER object with metadata and NAM PCs:
+## obj <- readRDS("path/to/your_sclaser_object.rds")
+## obj <- scLASER_modeling(
+##   obj,
+##   disease_var = "disease",
+##   time_var    = "visit",
+##   covariates  = c("age", "sex"),
+##   subject_var = "subject_id",
+##   sample_var  = "sample_id"
+## )
+## head(obj@pipeline_output)
+}
+
 }

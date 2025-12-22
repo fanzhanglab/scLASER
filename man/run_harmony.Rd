@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_harmony.R
 \name{run_harmony}
 \alias{run_harmony}
-\title{Title}
+\title{Run Harmony batch correction on stored NAM PCs}
 \usage{
 run_harmony(
   object,
@@ -17,24 +17,55 @@ run_harmony(
 )
 }
 \arguments{
-\item{object}{}
+\item{object}{A \code{\linkS4class{scLASER}} object. Must contain a non-\code{NULL}
+matrix in \code{object@pcs} and a data.frame in \code{object@metadata}.}
 
-\item{batch_col}{}
+\item{batch_col}{Character scalar. Column name in \code{object@metadata} that
+encodes batch / sample / donor labels for integration (default \code{"sample_id"}).
+This column is coerced to a factor internally.}
 
-\item{theta}{}
+\item{theta}{Numeric. Harmony diversity clustering penalty parameter
+(passed to \code{harmony::HarmonyMatrix()}).}
 
-\item{do_pca}{}
+\item{do_pca}{Logical. If \code{TRUE}, Harmony will perform PCA internally.
+If \code{FALSE} (default), Harmony uses \code{object@pcs} as the input
+embedding.}
 
-\item{epsilon.cluster}{}
+\item{epsilon.cluster}{Numeric. Convergence tolerance for the clustering step.
+Passed to \code{harmony::HarmonyMatrix()}.}
 
-\item{epsilon.harmony}{}
+\item{epsilon.harmony}{Numeric. Convergence tolerance for Harmony correction.
+Passed to \code{harmony::HarmonyMatrix()}.}
 
-\item{max.iter.cluster}{}
+\item{max.iter.cluster}{Integer. Maximum number of clustering iterations.}
 
-\item{max.iter.harmony}{}
+\item{max.iter.harmony}{Integer. Maximum number of Harmony iterations.}
 
-\item{plot_convergence}{}
+\item{plot_convergence}{Logical. If \code{TRUE}, Harmony may display convergence
+diagnostics/plots depending on the Harmony implementation.}
+}
+\value{
+The input \code{scLASER} object with \code{object@harmony} populated as a
+  numeric matrix of harmonized embeddings.
 }
 \description{
-Title
+Applies Harmony integration to the principal components stored in
+\code{object@pcs} using batch information from \code{object@metadata}.
+The harmonized embeddings are stored in \code{object@harmony} as a matrix
+with the same row/column names as \code{object@pcs}.
+}
+\details{
+This is a convenience wrapper around \code{harmony::HarmonyMatrix()}.
+}
+\examples{
+\donttest{
+## Requires an scLASER object with PCs and metadata:
+## obj <- readRDS("path/to/your_sclaser_object.rds")
+## obj <- run_harmony(obj, batch_col = "sample_id", theta = 2, plot_convergence = FALSE)
+## dim(obj@harmony)
+}
+
+}
+\seealso{
+\code{\link[harmony:HarmonyMatrix]{harmony::HarmonyMatrix}}
 }
