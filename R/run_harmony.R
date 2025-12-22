@@ -1,19 +1,45 @@
-#' Title
+#' Run Harmony batch correction on stored NAM PCs
 #'
-#' @param object 
-#' @param batch_col 
-#' @param theta 
-#' @param do_pca 
-#' @param epsilon.cluster 
-#' @param epsilon.harmony 
-#' @param max.iter.cluster 
-#' @param max.iter.harmony 
-#' @param plot_convergence 
+#' Applies Harmony integration to the principal components stored in
+#' \code{object@pcs} using batch information from \code{object@metadata}.
+#' The harmonized embeddings are stored in \code{object@harmony} as a matrix
+#' with the same row/column names as \code{object@pcs}.
 #'
-#' @return
-#' @export
+#' This is a convenience wrapper around \code{harmony::HarmonyMatrix()}.
+#'
+#' @param object A \code{\linkS4class{scLASER}} object. Must contain a non-\code{NULL}
+#'   matrix in \code{object@pcs} and a data.frame in \code{object@metadata}.
+#' @param batch_col Character scalar. Column name in \code{object@metadata} that
+#'   encodes batch / sample / donor labels for integration (default \code{"sample_id"}).
+#'   This column is coerced to a factor internally.
+#' @param theta Numeric. Harmony diversity clustering penalty parameter
+#'   (passed to \code{harmony::HarmonyMatrix()}).
+#' @param do_pca Logical. If \code{TRUE}, Harmony will perform PCA internally.
+#'   If \code{FALSE} (default), Harmony uses \code{object@pcs} as the input
+#'   embedding.
+#' @param epsilon.cluster Numeric. Convergence tolerance for the clustering step.
+#'   Passed to \code{harmony::HarmonyMatrix()}.
+#' @param epsilon.harmony Numeric. Convergence tolerance for Harmony correction.
+#'   Passed to \code{harmony::HarmonyMatrix()}.
+#' @param max.iter.cluster Integer. Maximum number of clustering iterations.
+#' @param max.iter.harmony Integer. Maximum number of Harmony iterations.
+#' @param plot_convergence Logical. If \code{TRUE}, Harmony may display convergence
+#'   diagnostics/plots depending on the Harmony implementation.
+#'
+#' @return The input \code{scLASER} object with \code{object@harmony} populated as a
+#'   numeric matrix of harmonized embeddings.
 #'
 #' @examples
+#' \donttest{
+#' ## Requires an scLASER object with PCs and metadata:
+#' ## obj <- readRDS("path/to/your_sclaser_object.rds")
+#' ## obj <- run_harmony(obj, batch_col = "sample_id", theta = 2, plot_convergence = FALSE)
+#' ## dim(obj@harmony)
+#' }
+#'
+#' @seealso \code{\link[harmony:HarmonyMatrix]{harmony::HarmonyMatrix}}
+#'
+#' @export
 run_harmony <- function(object,
                         batch_col = "sample_id",
                         theta = 2,
