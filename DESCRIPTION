@@ -41,7 +41,8 @@ Imports:
     mixOmics,
     RSpectra,
     glue,
-    tibble
+    tibble,
+    rlang
 Suggests:
     rmarkdown,
     knitr,
