@@ -25,4 +25,5 @@
 #' @import uwot
 #' @import parallel
 #' @import mixOmics
+#' @importFrom rlang .data
 NULL
