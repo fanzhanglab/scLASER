@@ -1,139 +1,122 @@
 #' Association testing between NAM embeddings and a sample-level variable
 #'
-#' Computes Neighborhood Aggregation Matrix (NAM) embeddings from a Seurat graph,
-#' residualizes them with respect to optional covariates, performs an SVD to obtain
-#' NAM PCs, and tests association between the NAM subspace and a numeric
-#' sample-level variable via a min-\emph{p} procedure with conditional permutations.
-#' Optionally writes the results back into the Seurat object as a reduction (`cna`)
-#' and per-cell neighborhood correlations (with FDR-thresholded variants).
+#' Computes Neighborhood Aggregation Matrix (NAM) embeddings from a Seurat
+#' nearest-neighbor graph, residualizes NAM with respect to optional covariates,
+#' performs SVD to obtain NAM PCs, and tests association between the NAM subspace
+#' and a numeric sample-level variable using a min-p scan over candidate numbers
+#' of PCs with conditional permutations.
 #'
-#' You can either (a) pass a Seurat object that already has a nearest-neighbor graph
-#' (e.g. created by `Seurat::FindNeighbors()`), or (b) pass `metadata` and precomputed
-#' low-dimensional coordinates (`pcs`), in which case a minimal Seurat object and graph
-#' are built internally.
+#' This function can either (A) use a provided \pkg{Seurat} object that already
+#' contains a neighbor graph, or (B) construct a minimal Seurat object internally
+#' from \code{obj@metadata} and \code{obj@harmony} and then build the graph.
 #'
-#' @param obj A \code{\linkS4class{scLASER}} object. Must contain either:
-#'   (a) a populated \code{@harmony} matrix and \code{@metadata} to internally
-#'   construct a Seurat object, or
-#'   (b) be accompanied by a non-\code{NULL} \code{seurat_object}.
+#' @param obj A \code{\linkS4class{scLASER}} object. If \code{seurat_object} is
+#'   \code{NULL}, \code{obj} must have both \code{@metadata} and \code{@harmony}
+#'   populated so a minimal Seurat object can be constructed.
 #'
-#' @param seurat_object A \code{Seurat} object with a precomputed cell-cell
-#'   neighbor graph (e.g. after \code{Seurat::FindNeighbors()}). If \code{NULL},
-#'   a minimal Seurat object is constructed internally from \code{obj}.
+#' @param seurat_object Optional. A \code{Seurat} object with a precomputed
+#'   cell-cell neighbor graph (e.g., after \code{Seurat::FindNeighbors()}).
+#'   If \code{NULL}, a minimal Seurat object is built from \code{obj}.
 #'
-#' @param test_var Character. Name of a numeric sample-level variable to test
-#'   for association with NAM embeddings.
+#' @param test_var Character scalar. Column name in sample-level metadata
+#'   (derived from \code{seurat_object@meta.data}) giving a numeric variable
+#'   to test for association with NAM embeddings.
 #'
-#' @param samplem_key Character. Column name identifying samples in both
-#'   cell-level and sample-level metadata.
+#' @param samplem_key Character scalar. Column name identifying samples in the
+#'   cell-level metadata (and used to derive sample-level metadata).
 #'
-#' @param graph_use Character. Name of the graph in
-#'   \code{seurat_object@graphs} to use. Default \code{"RNA_snn"}.
+#' @param graph_use Character scalar. Name of the graph in
+#'   \code{seurat_object@graphs} to use. Default is \code{"RNA_snn"}.
 #'
-#' @param batches Optional character vector of batch variable names used for
-#'   conditional permutation stratification.
+#' @param batches Optional character vector of column names (sample-level) used
+#'   to define permutation blocks for conditional permutations. If \code{NULL},
+#'   all samples are permuted together.
 #'
-#' @param covs Optional character vector of covariate names to regress out
-#'   before association testing.
+#' @param covs Optional character vector of sample-level covariate column names
+#'   to regress out (residualize) before association testing.
 #'
-#' @param nsteps Integer or \code{NULL}. Number of diffusion steps for NAM
-#'   construction. If \code{NULL}, an adaptive stopping rule is used.
+#' @param nsteps Integer or \code{NULL}. Number of diffusion steps used to build
+#'   NAM. If \code{NULL}, an adaptive stopping rule is used.
 #'
 #' @param verbose Logical. Print progress messages.
 #'
-#' @param assay Character or \code{NULL}. Assay name for the created Seurat
-#'   reduction.
+#' @param assay Character or \code{NULL}. Assay name used when creating the
+#'   NAM reduction object internally.
 #'
-#' @param key Character. Key prefix for the NAM PC reduction.
+#' @param key Character. Key prefix for NAM PC names in the created reduction.
 #'
-#' @param maxnsteps Integer. Maximum number of diffusion steps when using
-#'   adaptive stopping.
+#' @param maxnsteps Integer. Maximum diffusion steps when using adaptive
+#'   stopping.
 #'
-#' @param max_frac_pcs Numeric in (0,1]. Maximum fraction of samples used to
-#'   determine the upper bound on NAM PCs.
+#' @param max_frac_pcs Numeric in (0, 1]. If \code{n_pcs} is \code{NULL}, the
+#'   default number of PCs is computed as \code{max(10, round(max_frac_pcs * N))},
+#'   where \code{N} is the number of samples.
 #'
-#' @param n_pcs Integer or \code{NULL}. Explicit number of NAM PCs to use when
-#'   constructing the neighbor graph and downstream association tests.
+#' @param n_pcs Integer or \code{NULL}. Explicit number of NAM PCs to compute
+#'   (and also used to build neighbors in the internally constructed Seurat
+#'   object). If \code{NULL}, uses \code{max_frac_pcs} heuristic.
 #'
-#' @param ks Optional integer vector of candidate numbers of NAM PCs to scan
-#'   in the min-\emph{p} procedure.
+#' @param ks Optional integer vector. Candidate numbers of NAM PCs to scan in the
+#'   min-p procedure. If \code{NULL}, a default grid is constructed from sample
+#'   size and available PCs.
 #'
-#' @param Nnull Integer. Number of conditional permutations.
+#' @param Nnull Integer. Number of conditional permutation replicates.
 #'
-#' @param force_permute_all Logical. If \code{TRUE}, ignore batch structure
-#'   during permutations.
+#' @param force_permute_all Logical. If \code{TRUE}, ignores \code{batches} and
+#'   permutes all samples together.
 #'
-#' @param local_test Logical. If \code{TRUE}, compute neighborhood-level
-#'   empirical FDR thresholds.
+#' @param seed Integer or \code{NULL}. Random seed used for permutations. If
+#'   \code{NULL}, a random seed is chosen.
 #'
-#' @param seed Integer. Random seed for permutation testing.
+#' @param return_nam Logical. If \code{TRUE}, stores NAM-related matrices
+#'   (embeddings/loadings/variance explained and NAM itself) into the returned
+#'   object.
 #'
-#' @param return_nam Logical. If \code{TRUE}, store NAM embeddings and related
-#'   matrices in the returned object.
-#'
-#' @return A `Seurat` object where:
+#' @return A \code{\linkS4class{scLASER}} object with updated slots:
 #' \itemize{
-#'   \item `reductions$cna` contains:
-#'     \itemize{
-#'       \item `embeddings`: neighborhood-by-PC NAM embeddings (nbhd x PC)
-#'       \item `loadings`: sample-by-PC NAM loadings
-#'       \item `stdev`: singular values
-#'       \item `misc`: a list with fields: `p` (global p-value), `nullminps`, `k` (selected PCs),
-#'         `ncorrs` (per-cell neighborhood correlations), `fdrs` (data.frame of FDR vs threshold),
-#'         `fdr_5p_t`, `fdr_10p_t`, `yhat`, `ycond`, `ks`, `beta`, `r2`,
-#'         `r2_perpc`, `nullr2_mean`, `nullr2_std`, projection matrix `M` and rank `r`.
-#'     }
-#'   \item `meta.data$cna_ncorrs`: per-cell (neighborhood) correlation score.
-#'   \item `meta.data$cna_ncorrs_fdr05`, `meta.data$cna_ncorrs_fdr10`,
-#'   `meta.data$cna_ncorrs_fdr20`, `meta.data$cna_ncorrs_fdr30`,
-#'   `meta.data$cna_ncorrs_fdr40`, `meta.data$cna_ncorrs_fdr50`:
-#'   thresholded versions at target FDR cutoffs.
+#'   \item \code{@nam_pcs}: NAM neighborhood-by-PC matrix.
+#'   \item \code{@NAM_matrix}: NAM sample-by-neighborhood matrix (transposed as stored).
 #' }
+#' (Additional association results may be stored in the Seurat reduction
+#' internally, depending on implementation.)
 #'
-#' @details
-#' **Pipeline summary:**\
-#' (1) Build NAM by diffusing sample indicators over the cell graph;\
-#' (2) Batch-kurtosis QC to drop unstable neighborhoods; \
-#' (3) Residualize NAM against covariates; \
-#' (4) SVD to obtain NAM PCs; \
-#' (5) Choose \eqn{k} via a min-\emph{p} scan over candidate `ks`; \
-#' (6) Obtain a global p-value using conditional permutations (stratified by `batches` if provided); \
-#' (7) Optionally compute neighborhood-level empirical FDR thresholds.
-#'
-#' @section Requirements:
-#' Relies on \pkg{Seurat}, \pkg{Matrix}, \pkg{RSpectra}, \pkg{moments}, \pkg{dplyr},
-#' \pkg{tibble}, \pkg{purrr}, and \pkg{glue}. Ensure a neighbor graph exists if supplying
-#' a `Seurat` object (see `Seurat::FindNeighbors()`).
-#'
-#' @seealso \code{\link[Seurat]{FindNeighbors}}, \code{\link[Seurat]{CreateSeuratObject}},
+#' @seealso \code{\link[Seurat]{FindNeighbors}},
+#'   \code{\link[Seurat]{CreateSeuratObject}},
 #'   \code{\link[Seurat]{CreateDimReducObject}}
 #'
 #' @examples
-#' \dontrun{
-#' # Case A: start from an existing Seurat object with a graph
-#' obj <- Seurat::FindNeighbors(obj, reduction = "pca", dims = 1:20)
-#' obj <- association_nam(
-#'   seurat_object = obj,
-#'   test_var = "numeric_sample_trait",
-#'   samplem_key = "sample_id",
-#'   covs = c("age","sex"),
-#'   batches = "batch",
-#'   graph_use = "RNA_snn",
-#'   local_test = TRUE
-#' )
+#' \donttest{
+#' ## Example workflow (requires PCs + Harmony already computed in the scLASER object)
+#' ## 1) Load a prepared scLASER object that already contains metadata and PCs.
+#' ##    (You typically create this in your own pipeline and save it as an .rds.)
+#' # obj <- readRDS("path/to/precomputed_scLASER_object.rds")
 #'
-#' # Case B: build from metadata + precomputed PCs
-#' obj2 <- association_nam(
-#'   seurat_object = NULL,
-#'   metadata = meta_df,             # rows = samples
-#'   pcs = pcs_mat,                  # rows = samples, cols = PCs
-#'   test_var = "numeric_sample_trait",
-#'   samplem_key = "sample_id",
-#'   local_test = FALSE
-#' )
+#' ## 2) (Optional) If Harmony embeddings are not present, compute them.
+#' ##    This assumes obj@pcs is populated and obj@metadata contains `sample_id`
+#' ##    (or another batch column).
+#' # obj <- run_harmony(obj, batch_col = "sample_id")
+#'
+#' ## 3) Run association testing.
+#' ##    If you do not pass a Seurat object, this function will internally
+#' ##    construct a minimal Seurat object from obj@metadata + obj@harmony.
+#' # obj <- association_nam_scLASER(
+#' #   obj          = obj,
+#' #   seurat_object = NULL,
+#' #   test_var     = "age",
+#' #   samplem_key  = "sample_id",
+#' #   batches      = c("sample_id"),
+#' #   covs         = c("sex"),
+#' #   Nnull        = 200,
+#' #   seed         = 1
+#' # )
+#'
+#' ## 4) Inspect outputs
+#' # dim(obj@nam_pcs)
+#' # dim(obj@NAM_matrix)
 #' }
-#'
+
 #' @export
+
 
 association_nam_scLASER <- function(obj,seurat_object = NULL,
                                     #  metadata = NULL,
@@ -153,7 +136,6 @@ association_nam_scLASER <- function(obj,seurat_object = NULL,
                                     ks = NULL,
                                     Nnull = 1000,
                                     force_permute_all = FALSE,
-                                    local_test = TRUE,
                                     seed = 1234,
                                     return_nam = TRUE) {
 
@@ -473,7 +455,7 @@ association_nam_scLASER <- function(obj,seurat_object = NULL,
   rownames(ncorrs) <- rownames(V)
 
   set.seed(seed)
-  y_ <- conditional_permutation(batches_vec, y, Nnull)
+  y_ <- .conditional_permutation(batches_vec, y, Nnull)
   .tmp <- apply(y_, 2, .minp_stats)
   nullminps <- purrr::map_dbl(.tmp, 'p')
   nullr2s <- purrr::map_dbl(.tmp, 'r2')
@@ -483,48 +465,12 @@ association_nam_scLASER <- function(obj,seurat_object = NULL,
     warning('global association p-value attained minimal possible value. Consider increasing Nnull')
   }
 
-  # get neighborhood fdrs if requested
-  fdrs <- NULL
-  fdr_5p_t <- NULL
-  fdr_10p_t <- NULL
-  fdr_20p_t <- NULL
-  fdr_30p_t <- NULL
-  fdr_40p_t <- NULL
-  fdr_50p_t <- NULL
-
-  if (local_test) {
-    message('computing neighborhood-level FDRs')
-    Nnull <- min(1000, Nnull)
-    y_ <- y_[, 1:Nnull, drop = FALSE]
-    ycond_ <- scale(M %*% y_, center = FALSE, scale = TRUE)
-    gamma_ <- crossprod(U[, 1:k, drop = FALSE], ycond_)
-    nullncorrs <- abs(V[, 1:k, drop = FALSE] %*% (sqrt(sv[1:k]) * (gamma_ / n)))
-
-    maxcorr <- max(abs(ncorrs))
-    fdr_thresholds <- seq(maxcorr / 4, maxcorr, maxcorr / 400)
-    fdr_vals <- .empirical_fdrs(ncorrs, nullncorrs, fdr_thresholds)
-    fdrs <- data.frame(
-      threshold = head(fdr_thresholds, -1),
-      fdr = fdr_vals,
-      num_detected = purrr::map_dbl(head(fdr_thresholds, -1), function(.t) sum(abs(ncorrs) > .t))
-    )
-    # find minimal thresholds giving desired FDRs
-    if (min(fdrs$fdr) <= 0.05) fdr_5p_t  <- min(fdrs$threshold[fdrs$fdr < 0.05])
-    if (min(fdrs$fdr) <= 0.10) fdr_10p_t <- min(fdrs$threshold[fdrs$fdr < 0.10])
-    if (min(fdrs$fdr) <= 0.20) fdr_20p_t <- min(fdrs$threshold[fdrs$fdr < 0.20])
-    if (min(fdrs$fdr) <= 0.30) fdr_30p_t <- min(fdrs$threshold[fdrs$fdr < 0.30])
-    if (min(fdrs$fdr) <= 0.40) fdr_40p_t <- min(fdrs$threshold[fdrs$fdr < 0.40])
-    if (min(fdrs$fdr) <= 0.50) fdr_50p_t <- min(fdrs$threshold[fdrs$fdr < 0.50])
-  }
 
   res <- list(
     p = pfinal,
     nullminps = nullminps,
     k = k,
     ncorrs = ncorrs,
-    fdrs = fdrs,
-    fdr_5p_t = fdr_5p_t,
-    fdr_10p_t = fdr_10p_t,
     yhat = yhat,
     ycond = ycond,
     ks = ks,
@@ -552,47 +498,11 @@ association_nam_scLASER <- function(obj,seurat_object = NULL,
     misc = res
   )
 
-  seurat_object@meta.data$cna_ncorrs <- ncorrs[colnames(seurat_object), , drop = TRUE]
 
-  seurat_object@meta.data$cna_ncorrs_fdr05 <- rep(0, nrow(seurat_object@meta.data))
-  if (!is.null(fdr_5p_t)) {
-    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_5p_t)
-    seurat_object@meta.data$cna_ncorrs_fdr05[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
-  }
-
-  seurat_object@meta.data$cna_ncorrs_fdr10 <- rep(0, nrow(seurat_object@meta.data))
-  if (!is.null(fdr_10p_t)) {
-    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_10p_t)
-    seurat_object@meta.data$cna_ncorrs_fdr10[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
-  }
-
-  seurat_object@meta.data$cna_ncorrs_fdr20 <- rep(0, nrow(seurat_object@meta.data))
-  if (!is.null(fdr_20p_t)) {
-    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_20p_t)
-    seurat_object@meta.data$cna_ncorrs_fdr20[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
-  }
-
-  seurat_object@meta.data$cna_ncorrs_fdr30 <- rep(0, nrow(seurat_object@meta.data))
-  if (!is.null(fdr_30p_t)) {
-    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_30p_t)
-    seurat_object@meta.data$cna_ncorrs_fdr30[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
-  }
-
-  seurat_object@meta.data$cna_ncorrs_fdr40 <- rep(0, nrow(seurat_object@meta.data))
-  if (!is.null(fdr_40p_t)) {
-    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_40p_t)
-    seurat_object@meta.data$cna_ncorrs_fdr40[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
-  }
-
-  seurat_object@meta.data$cna_ncorrs_fdr50 <- rep(0, nrow(seurat_object@meta.data))
-  if (!is.null(fdr_50p_t)) {
-    idx_passed <- which(abs(seurat_object@meta.data$cna_ncorrs) >= fdr_50p_t)
-    seurat_object@meta.data$cna_ncorrs_fdr50[idx_passed] <- seurat_object@meta.data$cna_ncorrs[idx_passed]
-  }
 
   obj@nam_pcs =nam_res$NAM_nbhdXpc
   obj@NAM_matrix = t(NAM)
 
-  #return(seurat_object)
+
   return(obj)
 }
