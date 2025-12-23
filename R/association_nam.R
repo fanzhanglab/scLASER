@@ -136,47 +136,47 @@
 #' @export
 
 association_nam_scLASER <- function(obj,seurat_object = NULL,
-                               #  metadata = NULL,
-                               # pcs = NULL,
-                               test_var = NULL,
-                               samplem_key = NULL,
-                               graph_use = 'RNA_snn',
-                               batches = NULL,
-                               covs = NULL,
-                               nsteps = NULL,
-                               verbose = TRUE,
-                               assay = NULL,
-                               key = 'NAMPC_',
-                               maxnsteps = 15L,
-                               max_frac_pcs = 0.15,   # kept for backward compatibility
-                               n_pcs = NULL,          # NEW: explicitly request number of PCs
-                               ks = NULL,
-                               Nnull = 1000,
-                               force_permute_all = FALSE,
-                               local_test = TRUE,
-                               seed = 1234,
-                               return_nam = TRUE) {
-  if (!is.null(seurat_object) && is.null(obj@metadata) && is.null(obj@harmony)) {
-    message("will use Seurat object following analysis...")
-  } else if (is.null(seurat_object) && !is.null(obj@metadata) && !is.null(obj@harmony)) {
-    # build a minimal Seurat object from metadata + precomputed PCs (stored as 'harmony' reduction)
+                                    #  metadata = NULL,
+                                    # pcs = NULL,
+                                    test_var = NULL,
+                                    samplem_key = NULL,
+                                    graph_use = 'RNA_snn',
+                                    batches = NULL,
+                                    covs = NULL,
+                                    nsteps = NULL,
+                                    verbose = TRUE,
+                                    assay = NULL,
+                                    key = 'NAMPC_',
+                                    maxnsteps = 15L,
+                                    max_frac_pcs = 0.15,   # kept for backward compatibility
+                                    n_pcs = NULL,          # NEW: explicitly request number of PCs
+                                    ks = NULL,
+                                    Nnull = 1000,
+                                    force_permute_all = FALSE,
+                                    local_test = TRUE,
+                                    seed = 1234,
+                                    return_nam = TRUE) {
 
+  if (!is.null(seurat_object)) {
+    message("Using provided Seurat object for analysis...")
 
+  } else if (!is.null(obj@metadata) && !is.null(obj@harmony)) {
+    # Build a minimal Seurat object from metadata + precomputed Harmony embeddings
     meta <- obj@metadata
-    rownames(meta) <- 1:nrow(meta)
+    rownames(meta) <- seq_len(nrow(meta))
 
     m <- as(t(obj@harmony), "dgTMatrix")
-    colnames(m) <- 1:ncol(m)
+    colnames(m) <- seq_len(ncol(m))
 
     obj1 <- Seurat::CreateSeuratObject(
       counts = m,
       meta.data = meta,
-      assay = 'RNA',
+      assay = "RNA",
       names.field = 1
     )
 
     harmony_embeddings_all <- obj@harmony
-    rownames(harmony_embeddings_all) <- 1:nrow(harmony_embeddings_all)
+    rownames(harmony_embeddings_all) <- seq_len(nrow(harmony_embeddings_all))
 
     obj1@reductions$harmony <- Seurat::CreateDimReducObject(
       embeddings = harmony_embeddings_all,
@@ -186,16 +186,28 @@ association_nam_scLASER <- function(obj,seurat_object = NULL,
     )
 
     # Use requested number of PCs for neighbor graph if provided
-    dims_use <- 1:min(ifelse(is.null(n_pcs), 20L, as.integer(n_pcs)),
-                      ncol(harmony_embeddings_all))
-    obj1 <- obj1 %>%
-      Seurat::FindNeighbors(verbose = TRUE, reduction = 'harmony',
-                            dims = dims_use, k.param = 30, nn.eps = 0)
+    dims_use <- 1:min(
+      ifelse(is.null(n_pcs), 20L, as.integer(n_pcs)),
+      ncol(harmony_embeddings_all)
+    )
+
+    obj1 <- Seurat::FindNeighbors(
+      object = obj1,
+      verbose = TRUE,
+      reduction = "harmony",
+      dims = dims_use,
+      k.param = 30,
+      nn.eps = 0
+    )
 
     seurat_object <- obj1
-  } else if ((is.null(seurat_object) && is.null(metadata) && !is.null(pcs)) ||
-             (is.null(seurat_object) && !is.null(metadata) && is.null(pcs))) {
-    stop('Must provide both metadata and precomputed PCs')
+
+  } else {
+    stop(
+      "Must provide either:\n",
+      "  (1) a non-NULL `seurat_object`, or\n",
+      "  (2) an scLASER object with both `@metadata` and `@harmony` populated."
+    )
   }
 
   ## (1) format data
@@ -490,19 +502,19 @@ association_nam_scLASER <- function(obj,seurat_object = NULL,
 
     maxcorr <- max(abs(ncorrs))
     fdr_thresholds <- seq(maxcorr / 4, maxcorr, maxcorr / 400)
-    fdr_vals <- empirical_fdrs(ncorrs, nullncorrs, fdr_thresholds)
+    fdr_vals <- .empirical_fdrs(ncorrs, nullncorrs, fdr_thresholds)
     fdrs <- data.frame(
       threshold = head(fdr_thresholds, -1),
       fdr = fdr_vals,
       num_detected = purrr::map_dbl(head(fdr_thresholds, -1), function(.t) sum(abs(ncorrs) > .t))
     )
     # find minimal thresholds giving desired FDRs
-    if (min(fdrs$fdr) <= 0.05) fdr_5p_t  <- min(subset(fdrs, fdr < 0.05)$threshold)
-    if (min(fdrs$fdr) <= 0.10) fdr_10p_t <- min(subset(fdrs, fdr < 0.10)$threshold)
-    if (min(fdrs$fdr) <= 0.20) fdr_20p_t <- min(subset(fdrs, fdr < 0.20)$threshold)
-    if (min(fdrs$fdr) <= 0.30) fdr_30p_t <- min(subset(fdrs, fdr < 0.30)$threshold)
-    if (min(fdrs$fdr) <= 0.40) fdr_40p_t <- min(subset(fdrs, fdr < 0.40)$threshold)
-    if (min(fdrs$fdr) <= 0.50) fdr_50p_t <- min(subset(fdrs, fdr < 0.50)$threshold)
+    if (min(fdrs$fdr) <= 0.05) fdr_5p_t  <- min(fdrs$threshold[fdrs$fdr < 0.05])
+    if (min(fdrs$fdr) <= 0.10) fdr_10p_t <- min(fdrs$threshold[fdrs$fdr < 0.10])
+    if (min(fdrs$fdr) <= 0.20) fdr_20p_t <- min(fdrs$threshold[fdrs$fdr < 0.20])
+    if (min(fdrs$fdr) <= 0.30) fdr_30p_t <- min(fdrs$threshold[fdrs$fdr < 0.30])
+    if (min(fdrs$fdr) <= 0.40) fdr_40p_t <- min(fdrs$threshold[fdrs$fdr < 0.40])
+    if (min(fdrs$fdr) <= 0.50) fdr_50p_t <- min(fdrs$threshold[fdrs$fdr < 0.50])
   }
 
   res <- list(
