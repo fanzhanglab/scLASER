@@ -74,7 +74,7 @@ devtools::install_github("fanzhanglab/scLASER")
   Simulating longitudinal single-cell datasets with user-defined clinical outcome trajectories, number of timepoints, demographic structures, number of individuals, number of cells, and technical variability.
 
 - [scLASER applied on IBD dataset](https://fanzhanglab.github.io/scLASER/vignettes/apply_scLASER_on_IBD.html)
- scLASER Performed on IBD dataset
+  scLASER Performed on IBD dataset
 
 
 
