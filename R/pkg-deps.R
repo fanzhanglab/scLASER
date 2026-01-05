@@ -11,7 +11,6 @@
 #' @import purrr
 #' @import MASS
 #' @import Seurat
-#' @import lme4
 #' @import broom.mixed
 #' @import ggplot2
 #' @import data.table

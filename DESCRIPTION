@@ -22,7 +22,6 @@ Imports:
     utils,
     Matrix,
     nlme,
-    lme4,
     dplyr,
     ggplot2,
     MASS,
