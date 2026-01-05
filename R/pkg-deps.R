@@ -10,7 +10,6 @@
 #' @import tidyr
 #' @import purrr
 #' @import MASS
-#' @import caret
 #' @import Seurat
 #' @import lme4
 #' @import broom.mixed

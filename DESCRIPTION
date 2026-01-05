@@ -28,7 +28,6 @@ Imports:
     MASS,
     Seurat,
     broom.mixed,
-    caret,
     data.table,
     doParallel,
     foreach,
