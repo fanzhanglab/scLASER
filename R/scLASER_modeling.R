@@ -50,6 +50,7 @@
 #' ## head(obj@pipeline_output)
 #' }
 #'
+#' @export
 scLASER_modeling <- function(
   object,
   disease_var = "disease",
