@@ -7,18 +7,16 @@
 #' @import utils
 #' @import Matrix
 #' @import dplyr
-#' @import tidyr
 #' @import purrr
 #' @import MASS
 #' @import Seurat
 #' @import broom.mixed
 #' @import ggplot2
-#' @import data.table
 #' @import harmony
 #' @import moments
 #' @import nlme
 #' @import uwot
 #' @import parallel
-#' @import mixOmics
+#' @importFrom mixOmics plsda withinVariation
 #' @importFrom rlang .data
 NULL
