@@ -24,12 +24,11 @@ Imports:
     nlme,
     dplyr,
     ggplot2,
-    MASS,
     Seurat,
-    broom.mixed,
     harmony,
     moments,
     purrr,
+    magrittr,
     uwot,
     mixOmics,
     RSpectra,
@@ -39,6 +38,7 @@ Imports:
 Suggests:
     rmarkdown,
     knitr,
+    MASS,
     testthat (>= 3.0.0)
 BuildVignettes: false
 URL: https://github.com/fanzhanglab/scLASER
