@@ -119,11 +119,10 @@ scLASER_modeling <- function(
     sample_var = "sample_id"
   ) {
     stopifnot(is.data.frame(forAnalysis))
-    tmp <- forAnalysis %>%
-      dplyr::mutate(
-        `:=`(!!disease_var, factor(.data[[disease_var]])),
-        `:=`(!!time_var, .data[[time_var]])
-      )
+    tmp <- forAnalysis
+    tmp[[disease_var]] <- factor(tmp[[disease_var]])
+    # tmp[[time_var]] stays as-is; keep this line only if you intended to coerce type
+    tmp[[time_var]] <- tmp[[time_var]]
 
     time_fac_var <- paste0(time_var, "_fac__tmp")
     tmp[[time_fac_var]] <- factor(tmp[[time_var]])
