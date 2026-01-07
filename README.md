@@ -49,16 +49,11 @@ devtools::install_github("fanzhanglab/scLASER")
 - utils
 - Matrix
 - nlme
-- lme4
-- pbapply
 - purrr
-- caret
 - uwot
 - Seurat
 - harmony
 - broom.mixed
-- foreach
-- doParallel
 - moments
 ```
 
