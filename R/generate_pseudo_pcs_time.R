@@ -129,19 +129,24 @@ generate_pseudo_pcs_time <- function(data,
     n_clusters <- length(unique(data[,cluster_col]))
     n_pcs <- n_pcs
 
-    cell_clusters <- as.integer(factor(data[,cluster_col]))
-    for (j in 1:3){
-      cell_clusters_tmp = cell_clusters
-      # set.seed(x*j)
-      shufle = sample(unique(cell_clusters_tmp))*10
-      for (i in 1:length(unique(cell_clusters))){
+    cell_clusters <- as.integer(factor(data[, cluster_col]))
+
+    cell_clusters_list <- vector("list", 3)
+    for (j in 1:3) {
+      cell_clusters_tmp <- cell_clusters
+      shufle <- sample(unique(cell_clusters_tmp)) * 10L
+      for (i in seq_along(unique(cell_clusters))) {
         cell_clusters_tmp <- dplyr::case_when(
           cell_clusters_tmp == i ~ as.integer(shufle[i]),
           TRUE ~ cell_clusters_tmp
         )
       }
-      assign(paste0("cell_clusters",j),cell_clusters_tmp)
+      cell_clusters_list[[j]] <- cell_clusters_tmp
     }
+
+    cell_clusters1 <- cell_clusters_list[[1]]
+    # (optional: you can also use [[2]] / [[3]] if you want later)
+
     cell_sex <- as.integer(factor(data[,sex_col]))
     cell_age <- as.integer(factor(data[,age_col]))
     cell_bmi <- as.integer(factor(data[,bmi_col]))
